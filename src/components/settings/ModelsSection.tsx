@@ -228,6 +228,7 @@ export function ModelsSection({ providerId }: ModelsSectionProps) {
           invalidateModels();
         }}
         providerId={providerId}
+        existingModelApiNames={models?.map((model) => model.apiName)}
       />
 
       <EditCustomModelDialog

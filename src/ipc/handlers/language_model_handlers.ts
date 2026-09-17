@@ -14,6 +14,7 @@ import {
   getLanguageModels,
   getLanguageModelsByProviders,
 } from "../shared/language_model_helpers";
+import { registerCustomProviderModelHandlers } from "./custom_provider_models_handler";
 import { db } from "@/db";
 import {
   language_models,
@@ -525,4 +526,7 @@ export function registerLanguageModelHandlers() {
       return getLanguageModelsByProviders();
     },
   );
+
+  // 自定义 Provider 的远端模型发现（GET {baseUrl}/models）。
+  registerCustomProviderModelHandlers();
 }

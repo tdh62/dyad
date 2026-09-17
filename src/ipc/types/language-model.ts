@@ -107,6 +107,29 @@ export const DeleteCustomModelParamsSchema = z.object({
   modelApiName: z.string(),
 });
 
+/**
+ * 自定义 Provider 通过远端 `GET {baseUrl}/models` 发现的模型条目。
+ *
+ * 只保留 UI 需要的最小字段，避免把供应商返回的其余内容一并带到渲染进程。
+ */
+export const DiscoveredModelSchema = z.object({
+  /** 可直接填入「Model ID」的标识，已去掉 Gemini 的 `models/` 前缀。 */
+  id: z.string(),
+  /** 供应商声明的归属方（OpenAI 风格的 `owned_by`）。 */
+  ownedBy: z.string().optional(),
+  created: z.number().optional(),
+});
+
+export type DiscoveredModel = z.infer<typeof DiscoveredModelSchema>;
+
+export const ListCustomProviderModelsParamsSchema = z.object({
+  providerId: z.string(),
+});
+
+export type ListCustomProviderModelsParams = z.infer<
+  typeof ListCustomProviderModelsParamsSchema
+>;
+
 // =============================================================================
 // Language Model Contracts
 // =============================================================================
@@ -182,6 +205,16 @@ export const languageModelContracts = {
     channel: "local-models:list-lmstudio",
     input: z.void(),
     output: z.object({ models: z.array(LocalModelSchema) }),
+  }),
+
+  /**
+   * 用自定义 Provider 已配置的 Base URL 与 API Key 请求其 `/models`，
+   * 让用户从真实可用模型中选择，而不是手工输入模型 ID。
+   */
+  listCustomProviderModels: defineContract({
+    channel: "custom-provider:list-models",
+    input: ListCustomProviderModelsParamsSchema,
+    output: z.object({ models: z.array(DiscoveredModelSchema) }),
   }),
 } as const;
 

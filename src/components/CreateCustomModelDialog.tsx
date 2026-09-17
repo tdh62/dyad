@@ -10,8 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ipc } from "@/ipc/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ipc, type DiscoveredModel } from "@/ipc/types";
 import { useMutation } from "@tanstack/react-query";
+import { Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { showError, showSuccess } from "@/lib/toast";
 
 interface CreateCustomModelDialogProps {
@@ -19,6 +27,8 @@ interface CreateCustomModelDialogProps {
   onClose: () => void;
   onSuccess: () => void;
   providerId: string;
+  /** 该 Provider 已有的模型 API 名，用于在远端列表中过滤掉重复项。 */
+  existingModelApiNames?: string[];
 }
 
 export function CreateCustomModelDialog({
@@ -26,12 +36,17 @@ export function CreateCustomModelDialog({
   onClose,
   onSuccess,
   providerId,
+  existingModelApiNames,
 }: CreateCustomModelDialogProps) {
   const [apiName, setApiName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const [maxOutputTokens, setMaxOutputTokens] = useState<string>("");
   const [contextWindow, setContextWindow] = useState<string>("");
+  const [discoveredModels, setDiscoveredModels] = useState<
+    DiscoveredModel[] | null
+  >(null);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -74,12 +89,47 @@ export function CreateCustomModelDialog({
     },
   });
 
+  /**
+   * 用该 Provider 已保存的 Base URL 与 API Key 拉取远端 `/models`，
+   * 让用户从真实可用的模型中挑选，而不是手工输入模型 ID。
+   */
+  const discoveryMutation = useMutation({
+    mutationFn: async () =>
+      ipc.languageModel.listCustomProviderModels({ providerId }),
+    onSuccess: (result) => {
+      setDiscoveredModels(result.models);
+      setDiscoveryError(null);
+    },
+    onError: (error) => {
+      setDiscoveredModels(null);
+      setDiscoveryError(
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch the model list.",
+      );
+    },
+  });
+
+  /** 选中远端模型后回填 Model ID，并补齐仍为空的显示名。 */
+  const handleSelectDiscoveredModel = (modelId: string) => {
+    setApiName(modelId);
+    setDisplayName((current) => current.trim() || modelId);
+  };
+
+  // 远端列表中剔除已添加过的模型，避免同一个 API 名被重复添加。
+  const existingApiNames = new Set(existingModelApiNames ?? []);
+  const selectableModels = (discoveredModels ?? []).filter(
+    (model) => !existingApiNames.has(model.id),
+  );
+
   const resetForm = () => {
     setApiName("");
     setDisplayName("");
     setDescription("");
     setMaxOutputTokens("");
     setContextWindow("");
+    setDiscoveredModels(null);
+    setDiscoveryError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -105,6 +155,74 @@ export function CreateCustomModelDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="pt-2 text-right">From provider</Label>
+              <div className="col-span-3 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => discoveryMutation.mutate()}
+                  disabled={mutation.isPending || discoveryMutation.isPending}
+                >
+                  {discoveryMutation.isPending ? (
+                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCwIcon className="mr-2 h-4 w-4" />
+                  )}
+                  {discoveryMutation.isPending
+                    ? "Fetching models..."
+                    : "Fetch model list"}
+                </Button>
+                {selectableModels.length > 0 && (
+                  <Select
+                    value={apiName}
+                    onValueChange={(value) =>
+                      value && handleSelectDiscoveredModel(value)
+                    }
+                    disabled={mutation.isPending}
+                  >
+                    <SelectTrigger
+                      className="w-full"
+                      aria-label="Select a model from the provider"
+                    >
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectableModels.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.id}
+                          {model.ownedBy ? ` · ${model.ownedBy}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {discoveryError && (
+                  <p className="text-xs text-red-500">{discoveryError}</p>
+                )}
+                {!discoveryError && discoveredModels === null && (
+                  <p className="text-xs text-muted-foreground">
+                    Lists models from this provider&apos;s <code>/models</code>{" "}
+                    endpoint using its saved API key, then fills in the model ID
+                    for you.
+                  </p>
+                )}
+                {!discoveryError && discoveredModels !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    {discoveredModels.length === 0
+                      ? "The provider returned no models."
+                      : selectableModels.length === 0
+                        ? `All ${discoveredModels.length} discovered model(s) are already added.`
+                        : `${selectableModels.length} model(s) available` +
+                          (discoveredModels.length > selectableModels.length
+                            ? ` · ${discoveredModels.length - selectableModels.length} already added`
+                            : "")}
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="model-id" className="text-right">
                 Model ID*

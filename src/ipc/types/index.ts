@@ -358,6 +358,8 @@ export type {
   LanguageModelProvider,
   LanguageModel,
   LocalModel,
+  DiscoveredModel,
+  ListCustomProviderModelsParams,
   CreateCustomLanguageModelProviderParams,
   CreateCustomLanguageModelParams,
   UpdateCustomLanguageModelParams,
