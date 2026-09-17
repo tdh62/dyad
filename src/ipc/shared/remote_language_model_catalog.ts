@@ -78,8 +78,6 @@ const CatalogModelSchema = z.object({
     .optional(),
 });
 
-
-
 const KNOWN_BUILTIN_MODEL_ALIASES = [
   "dyad/theme-generator/google",
   "dyad/theme-generator/anthropic",
@@ -157,20 +155,23 @@ function buildFallbackCatalog(): BuiltinLanguageModelCatalog {
   const providers: LanguageModelProvider[] = Object.entries(CLOUD_PROVIDERS)
     .filter(([providerId]) => providerId !== FREE_PRO_MODEL_PROVIDER)
     .map(([providerId, provider]) => ({
-    id: providerId,
-    name: provider.displayName,
-    hasFreeTier: provider.hasFreeTier,
-    websiteUrl: provider.websiteUrl,
-    gatewayPrefix: provider.gatewayPrefix,
-    secondary: provider.secondary,
-    envVarName:
-      PROVIDER_TO_ENV_VAR[providerId as keyof typeof PROVIDER_TO_ENV_VAR] ??
-      undefined,
-    type: "cloud",
-  }));
+      id: providerId,
+      name: provider.displayName,
+      hasFreeTier: provider.hasFreeTier,
+      websiteUrl: provider.websiteUrl,
+      gatewayPrefix: provider.gatewayPrefix,
+      secondary: provider.secondary,
+      envVarName:
+        PROVIDER_TO_ENV_VAR[providerId as keyof typeof PROVIDER_TO_ENV_VAR] ??
+        undefined,
+      type: "cloud",
+    }));
 
   const modelsByProvider: Record<string, LanguageModel[]> = {};
   for (const [providerId, models] of Object.entries(MODEL_OPTIONS)) {
+    if (providerId === FREE_PRO_MODEL_PROVIDER) {
+      continue;
+    }
     modelsByProvider[providerId] = models.map((model) => ({
       apiName: model.name,
       displayName: model.displayName,
@@ -298,12 +299,12 @@ function convertRemoteCatalog(
         PROVIDER_TO_ENV_VAR[provider.id as keyof typeof PROVIDER_TO_ENV_VAR] ??
         undefined,
       type: "cloud",
-    }),
-  );
+    }));
 
   const modelsByProvider = Object.fromEntries(
-    Object.entries(remoteCatalog.modelsByProvider).map(
-      ([providerId, models]) => [
+    Object.entries(remoteCatalog.modelsByProvider)
+      .filter(([providerId]) => providerId !== FREE_PRO_MODEL_PROVIDER)
+      .map(([providerId, models]) => [
         providerId,
         models.map((model) => ({
           apiName: model.apiName,
@@ -318,26 +319,8 @@ function convertRemoteCatalog(
           effortSettings: model.effortSettings,
           type: "cloud" as const,
         })),
-      ],
-    ),
+      ]),
   );
-  const remoteAutoModels = modelsByProvider.auto ?? [];
-  const fallbackAutoModels = MODEL_OPTIONS.auto.map((model) => ({
-    apiName: model.name,
-    displayName: model.displayName,
-    description: model.description,
-    tag: model.tag,
-    tagColor: model.tagColor,
-    maxOutputTokens: model.maxOutputTokens,
-    contextWindow: model.contextWindow,
-    temperature: model.temperature,
-    dollarSigns: model.dollarSigns,
-    effortSettings: model.effortSettings,
-    type: "cloud" as const,
-  }));
-  if (remoteAutoModels.length === 0) {
-    modelsByProvider.auto = fallbackAutoModels;
-  }
 
   const parsedExpiresAt = remoteCatalog.expiresAt
     ? new Date(remoteCatalog.expiresAt).getTime()

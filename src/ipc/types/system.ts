@@ -65,8 +65,6 @@ export const SystemDebugInfoSchema = z.object({
   platform: z.string(),
   architecture: z.string(),
   logs: z.string(),
-  /** Auto-updater failure details (last in-process error + Squirrel log tail on Windows). Null if none. */
-  updaterLogs: z.string().nullable(),
   selectedLanguageModel: z.string(),
 });
 

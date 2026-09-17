@@ -94,10 +94,6 @@ const DebugSettingsSchema = z.object({
   effortLevel: z.string(),
   /** Max chat turns kept in context window */
   maxChatTurnsInContext: z.number().nullable(),
-  /** Whether auto-update is enabled */
-  enableAutoUpdate: z.boolean(),
-  /** Release channel: "stable" | "beta" */
-  releaseChannel: z.string(),
   /** Runtime mode: "host" | "docker" */
   runtimeMode2: z.string().nullable(),
   /** UI zoom level */
@@ -383,8 +379,6 @@ export const SessionDebugBundleSchema = z.object({
   codebase: z.string(),
   /** Application logs (last 1000 lines) */
   logs: z.string(),
-  /** Auto-updater failure details (last in-process error + Squirrel log tail on Windows). Null if none. */
-  updaterLogs: z.string().nullable(),
   /**
    * Process-level memory diagnostics: Electron process metrics, per-app child
    * process tree RSS, and real system memory-pressure signals (darwin).

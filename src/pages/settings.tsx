@@ -22,8 +22,6 @@ import { TestingForNewAppsSwitch } from "@/components/TestingForNewAppsSwitch";
 import { AutoExpandPreviewSwitch } from "@/components/AutoExpandPreviewSwitch";
 import { KeepPreviewsRunningSwitch } from "@/components/KeepPreviewsRunningSwitch";
 import { ChatEventNotificationSwitch } from "@/components/ChatEventNotificationSwitch";
-import { AutoUpdateSwitch } from "@/components/AutoUpdateSwitch";
-import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
 import { NeonIntegration } from "@/components/NeonIntegration";
 import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
 import { NodePathSelector } from "@/components/NodePathSelector";
@@ -438,18 +436,6 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
 
       <div id={SETTING_IDS.zoom}>
         <ZoomSelector />
-      </div>
-
-      <div id={SETTING_IDS.autoUpdate} className="space-y-1.5">
-        <AutoUpdateSwitch />
-        <p className={hint}>
-          This will automatically update the app when new versions are
-          available.
-        </p>
-      </div>
-
-      <div id={SETTING_IDS.releaseChannel}>
-        <ReleaseChannelSelector />
       </div>
 
       <div id={SETTING_IDS.runtimeMode}>

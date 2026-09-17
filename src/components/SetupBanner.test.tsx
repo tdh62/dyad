@@ -58,7 +58,6 @@ vi.mock("@/hooks/useSettings", () => ({
         },
   }),
 }));
-vi.mock("./ProBanner", () => ({ SetupDyadProButton: () => null }));
 vi.mock("@/ipc/types", () => ({
   ipc: {
     settings: {
@@ -88,22 +87,24 @@ function setup() {
   );
   return userEvent.setup();
 }
-it("offers ChatGPT sign-in without a Pro key and keeps other providers accessible", async () => {
+it("offers ChatGPT sign-in and keeps other providers accessible", async () => {
   const user = setup();
   expect(
     screen.queryByRole("button", { name: "Google Free" }),
   ).not.toBeInTheDocument();
   expect(screen.queryByText(/No Dyad usage fees/)).not.toBeInTheDocument();
   expect(
-    screen.getByRole("button", { name: "ChatGPT subscription Free" }),
+    screen.getByRole("button", { name: "ChatGPT subscription" }),
   ).toBeVisible();
   expect(screen.getByText(/Your prompt is saved/)).toBeVisible();
   await user.click(
-    screen.getByRole("button", { name: "ChatGPT subscription Free" }),
+    screen.getByRole("button", { name: "ChatGPT subscription" }),
   );
+  // This build treats every user as Pro, so connecting a subscription keeps
+  // the currently selected model instead of picking one for them.
   expect(mocks.connect).toHaveBeenCalledWith({
     acceptCharges: true,
-    selectModel: true,
+    selectModel: false,
   });
   await user.click(screen.getByRole("button", { name: "Other providers" }));
   expect(mocks.navigate).toHaveBeenCalled();
@@ -112,13 +113,13 @@ it("keeps sign-in errors visible so users can retry", async () => {
   mocks.connect.mockRejectedValueOnce(new Error("Secure storage unavailable"));
   const user = setup();
   await user.click(
-    screen.getByRole("button", { name: "ChatGPT subscription Free" }),
+    screen.getByRole("button", { name: "ChatGPT subscription" }),
   );
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Secure storage unavailable",
   );
   expect(
-    screen.getByRole("button", { name: "ChatGPT subscription Free" }),
+    screen.getByRole("button", { name: "ChatGPT subscription" }),
   ).toBeEnabled();
 });
 it("keeps the pending provider disabled and offers a separate cancellation action", async () => {
@@ -150,7 +151,7 @@ it("omits subscription pricing when Pro is active", () => {
 it("waits for settings before showing fees or permitting connection", () => {
   mocks.settingsLoading = true;
   setup();
-  expect(screen.getByText("Checking Dyad Pro status…")).toBeVisible();
+  expect(screen.getByText("Checking AI setup status…")).toBeVisible();
   expect(screen.queryByText(/No Dyad usage fees/)).not.toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "ChatGPT subscription" }),

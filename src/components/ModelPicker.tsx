@@ -31,12 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  CheckIcon,
-  ChevronRightIcon,
-  LockIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { CheckIcon, ChevronRightIcon, LockIcon } from "lucide-react";
 import { ProviderIcon } from "@/components/ProviderIcon";
 import { SubscriptionModelMenu } from "@/components/SubscriptionModelMenu";
 import { useSubscriptionAccount } from "@/hooks/useSubscriptionAccount";
@@ -52,7 +47,6 @@ import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
 import { useFreeModelQuota } from "@/hooks/useFreeModelQuota";
 import {
   FREE_PRO_MODEL_FALLBACK_CHAT_MODE,
-  FREE_PRO_MODEL_NAME,
   isFreeProBuildModeCombination,
   isFreeProLanguageModel,
   isFreeProModel,
@@ -74,7 +68,6 @@ import {
 import {
   AUTO_SIDEKICK_CHAT_MODE,
   AUTO_SIDEKICK_DISPLAY_NAME,
-  AUTO_SIDEKICK_MODEL_NAME,
   isAutoSidekickModel,
 } from "@/lib/autoSidekick";
 
@@ -89,9 +82,6 @@ const PRO_PILL_CLASS = cn(
   PILL_CLASS,
   "bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 bg-[length:200%_100%] animate-[shimmer_5s_ease-in-out_infinite] text-white",
 );
-
-const DYAD_PRO_UPGRADE_BASE_URL =
-  "https://www.dyad.sh/pro?utm_source=dyad-app&utm_medium=app";
 
 const NAVIGATION_SUBMENU_HOVER_PROPS = {
   openOnHover: true,
@@ -180,7 +170,7 @@ export function ModelPicker() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const posthog = usePostHog();
-  const { isTrial, isLoadingTrialStatus } = useTrialModelRestriction();
+  const { isTrial } = useTrialModelRestriction();
   const freeModelQuota = useFreeModelQuota();
   const hasEstablishedChat = Boolean(
     chat && (chat.modelSelection || chat.messages.length > 0),
@@ -381,48 +371,6 @@ export function ModelPicker() {
     return selectedModel.name;
   };
 
-  // Get auto provider models (if any)
-  const catalogAutoModels =
-    !loading && modelsByProviders && modelsByProviders["auto"]
-      ? modelsByProviders["auto"].filter((model) => {
-          if (model.apiName === FREE_PRO_MODEL_NAME) {
-            return dyadProEnabled && !isTrial && !isLoadingTrialStatus;
-          }
-          if (settings && !dyadProEnabled && model.apiName === "value") {
-            return false;
-          }
-          if (settings && !dyadProEnabled && model.apiName === "balanced") {
-            return false;
-          }
-          if (settings && dyadProEnabled && model.apiName === "free") {
-            return false;
-          }
-          return true;
-        })
-      : [];
-  const regularAutoModel = catalogAutoModels.find(
-    (model) => model.apiName === "auto",
-  );
-  const autoModels = regularAutoModel
-    ? catalogAutoModels.flatMap((model) =>
-        model.apiName === "auto" && dyadProEnabled
-          ? [
-              model,
-              {
-                ...model,
-                apiName: AUTO_SIDEKICK_MODEL_NAME,
-                displayName: AUTO_SIDEKICK_DISPLAY_NAME,
-                description:
-                  "Uses Auto and delegates straightforward implementation tasks to a Sidekick",
-                tag: "Experimental",
-                tagColor:
-                  "bg-violet-500/15 text-violet-700 dark:text-violet-300",
-              },
-            ]
-          : [model],
-      )
-    : catalogAutoModels;
-
   if (!settings) {
     return null;
   }
@@ -447,18 +395,6 @@ export function ModelPicker() {
       settings.modelEffortPreferences?.[getModelPreferenceKey(selectedModel)],
   }).effortLevel;
   const modelDisplayName = getModelDisplayName();
-  const trialAutoModel = autoModels.find((model) => model.apiName === "auto");
-  const trialAutoEffortSettings = getEffortSettings(trialAutoModel);
-  const trialAutoEffort = createModelSelection({
-    model: { name: "auto", provider: "auto" },
-    catalogModel: trialAutoModel,
-    preferredEffortLevel:
-      selectedModel.provider === "auto" && selectedModel.name === "auto"
-        ? selectedEffortLevel
-        : settings.modelEffortPreferences?.[
-            getModelPreferenceKey({ name: "auto", provider: "auto" })
-          ],
-  }).effortLevel;
   // The root menu is a quick switcher. The complete catalog is prepared here
   // for the nested "All models" menu.
   const providerEntries =
@@ -678,31 +614,6 @@ export function ModelPicker() {
     setUnlockTarget({ providerId, model });
   };
 
-  const handleUnlockAllClick = () => {
-    posthog.capture("model-picker:upgrade-click", {
-      source: "unlock-all-footer",
-    });
-    ipc.system.openExternalUrl(
-      `${DYAD_PRO_UPGRADE_BASE_URL}&utm_campaign=model-picker-unlock-all`,
-    );
-    setOpen(false);
-  };
-
-  const handleUnlockDialogUpgradeClick = () => {
-    if (!unlockTarget) {
-      return;
-    }
-    posthog.capture("model-picker:upgrade-click", {
-      source: "locked-model-dialog",
-      provider: unlockTarget.providerId,
-      model: unlockTarget.model.apiName,
-    });
-    ipc.system.openExternalUrl(
-      `${DYAD_PRO_UPGRADE_BASE_URL}&utm_campaign=model-picker-locked-model`,
-    );
-    setUnlockTarget(null);
-  };
-
   const handleUnlockDialogOwnKeyClick = () => {
     if (!unlockTarget) {
       return;
@@ -718,9 +629,6 @@ export function ModelPicker() {
     });
   };
 
-  const unlockTargetIsFreeModel = unlockTarget
-    ? isFreeOpenRouterModelName(unlockTarget.model.apiName)
-    : false;
   const unlockTargetProviderName = unlockTarget
     ? getProviderDisplayName(unlockTarget.providerId)
     : "";
@@ -1343,313 +1251,165 @@ export function ModelPicker() {
         <DropdownMenuContent className={MODEL_MENU_WIDTH_CLASS} align="start">
           <SubscriptionModelMenu>
             <DropdownMenuSeparator />
-            {/* Trial user upgrade banner */}
-            {isTrial && (
-              <>
-                <div className="px-2 py-3 bg-gradient-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/50 dark:to-sky-950/50">
-                  <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-2">
-                    Upgrade from Dyad Pro trial to unlock more models.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer w-full bg-indigo-600 hover:bg-indigo-700 text-white hover:text-white border-indigo-600"
-                    onClick={() => {
-                      ipc.system.openExternalUrl(
-                        "https://academy.dyad.sh/subscription",
-                      );
-                      setOpen(false);
-                    }}
-                  >
-                    Upgrade to Dyad Pro
-                  </Button>
-                </div>
-                <DropdownMenuSeparator />
-                {/* Trial users only see the auto model */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger
-                    hideChevron
-                    data-model-provider="auto"
-                    data-model-name="auto"
-                    aria-label={`Auto. Trial. Selected. Effort: ${formatEffortLevel(trialAutoEffort)}. Press Enter to select; press Right Arrow to configure effort.`}
-                    className="relative py-2 bg-primary/8 before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-r-full before:bg-primary"
-                    onMouseDown={(event) => {
-                      if (!isEffortChevronTarget(event.target)) {
-                        event.preventBaseUIHandler();
-                      }
-                    }}
-                    onClick={(event) => {
-                      if (!isEffortChevronTarget(event.target)) {
-                        event.preventBaseUIHandler();
-                        void onModelSelect({
-                          model: { name: "auto", provider: "auto" },
-                          catalogModel: autoModels.find(
-                            (model) => model.apiName === "auto",
-                          ),
-                        });
-                        setOpen(false);
-                      }
-                    }}
-                  >
-                    <div className="flex justify-between items-center w-full gap-2">
-                      <span className="text-[13px]">Auto</span>
-                      <span className="ml-auto flex items-center gap-1.5">
-                        <span
-                          className={cn(
-                            PILL_CLASS,
-                            "bg-primary/10 text-primary",
-                          )}
-                        >
-                          Trial
-                        </span>
-                        <CheckIcon className="size-3.5 text-primary shrink-0" />
-                        <span
-                          data-effort-level
-                          className="text-xs text-muted-foreground"
-                          title={`Reasoning effort: ${formatEffortLevel(trialAutoEffort)}`}
-                        >
-                          {formatCompactEffortLevel(trialAutoEffort)}
-                        </span>
-                        <span
-                          data-effort-chevron
-                          aria-hidden="true"
-                          className="-mr-1 flex size-6 items-center justify-center rounded-sm hover:bg-muted"
-                        >
-                          <ChevronRightIcon className="size-4" />
-                        </span>
-                      </span>
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-52">
-                    <DropdownMenuLabel>Effort</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {trialAutoEffortSettings.possibleEffortLevels.map(
-                      (effortLevel) => (
-                        <DropdownMenuItem
-                          key={effortLevel}
-                          onClick={() => {
-                            void onModelSelect({
-                              model: { name: "auto", provider: "auto" },
-                              catalogModel: trialAutoModel,
-                              effortLevel,
-                              rememberEffort: true,
-                            });
-                            setOpen(false);
-                          }}
-                        >
-                          <span>{formatEffortLevel(effortLevel)}</span>
-                          {effortLevel ===
-                            trialAutoEffortSettings.defaultEffortLevel && (
-                            <span className="text-xs text-muted-foreground">
-                              (default)
-                            </span>
-                          )}
-                          {effortLevel === trialAutoEffort && (
-                            <CheckIcon className="ml-auto size-3.5 text-primary" />
-                          )}
-                        </DropdownMenuItem>
-                      ),
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              </>
-            )}
-
-            {/* Non-trial users get a compact quick switcher. */}
-            {!isTrial && (
-              <>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger
-                    className="w-full font-normal"
-                    {...NAVIGATION_SUBMENU_HOVER_PROPS}
-                  >
-                    <span>All models</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent
-                    className={cn(MODEL_MENU_WIDTH_CLASS, SCROLL_AREA_CLASS)}
-                    data-testid="more-models-submenu"
-                    data-catalog-loading={loading}
-                  >
-                    <DropdownMenuLabel>All models</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {loading ? (
-                      <div className="text-xs text-center py-2 text-muted-foreground">
-                        Loading cloud models...
-                      </div>
-                    ) : !hasCloudCatalogEntries ? (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        {cloudCatalogError
-                          ? "Couldn’t load cloud models"
-                          : "No cloud models available"}
-                      </div>
-                    ) : (
-                      <>
-                        {(() => {
-                          const nodes: ReactNode[] = [];
-                          cloudCatalogGroups.forEach(
-                            ({ tier, entries }, index) => {
-                              if (index > 0) {
-                                nodes.push(
-                                  <DropdownMenuSeparator
-                                    key={`tier-sep-${tier.label}`}
-                                  />,
-                                );
-                              }
-                              nodes.push(
-                                <div
-                                  key={`tier-label-${tier.label}`}
-                                  className="flex items-center gap-1.5 px-2 pt-1.5 pb-1"
-                                >
-                                  <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground shrink-0">
-                                    {tier.label}
-                                  </span>
-                                  <span
-                                    aria-hidden="true"
-                                    className="size-[3px] rounded-full bg-muted-foreground/50 shrink-0"
-                                  />
-                                  <span className="text-[11px] text-muted-foreground/85 truncate">
-                                    {tier.caption}
-                                  </span>
-                                </div>,
-                              );
-                              entries.forEach(({ providerId, model }) => {
-                                nodes.push(
-                                  renderCloudModelItem({ providerId, model }),
-                                );
-                              });
-                            },
-                          );
-                          return nodes;
-                        })()}
-                      </>
-                    )}
-                    <DropdownMenuSeparator />
-                    <div
-                      className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
-                      data-testid="local-providers-section"
-                    >
-                      Local providers
-                    </div>
-                    {renderLocalProviderSubmenu({
-                      providerId: "ollama",
-                      label: "Ollama",
-                      models: ollamaModels,
-                      loading: ollamaLoading,
-                      error: ollamaError,
-                    })}
-                    {renderLocalProviderSubmenu({
-                      providerId: "lmstudio",
-                      label: "LM Studio",
-                      models: lmStudioModels,
-                      loading: lmStudioLoading,
-                      error: lmStudioError,
-                    })}
-                    {otherProviderEntries.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <div
-                          className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
-                          data-testid="cloud-providers-section"
-                        >
-                          Cloud providers
-                        </div>
-                        {otherProviderEntries.map(([providerId, models]) =>
-                          renderProviderSubmenu(providerId, models),
-                        )}
-                      </>
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSeparator />
-
-                {loading ? (
-                  <div className="text-xs text-center py-2 text-muted-foreground">
-                    Loading models...
-                  </div>
-                ) : (
-                  <>
-                    {autoModels.length > 0 && (
-                      <>
-                        {autoModels.map((model) =>
-                          renderCloudModelItem({
-                            providerId: "auto",
-                            model,
-                            showPrice: false,
-                          }),
-                        )}
-                        {recentModelEntries.length > 0 && (
-                          <DropdownMenuSeparator />
-                        )}
-                      </>
-                    )}
-
-                    {cloudCatalogError && autoModels.length === 0 && (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        Couldn’t load cloud models
-                      </div>
-                    )}
-
-                    {recentModelEntries.length > 0 && (
-                      <>
-                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Recent
-                        </DropdownMenuLabel>
-                        {recentModelEntries.map((entry) => {
-                          if (entry.type === "cloud") {
-                            return renderCloudModelItem({
-                              providerId: entry.providerId,
-                              model: entry.model,
-                            });
-                          }
-                          if (entry.type === "local") {
-                            return renderLocalModelItem(
-                              entry.providerId,
-                              entry.model,
-                            );
-                          }
-                          return (
-                            <DropdownMenuItem
-                              key={`${entry.providerId}-${entry.modelName}-loading`}
-                              disabled
-                              aria-label={`${entry.modelName}. Loading local model`}
-                              className="py-1.5"
-                            >
-                              <ProviderIcon providerId={entry.providerId} />
-                              <span className="min-w-0 truncate text-[13px]">
-                                {entry.modelName}
-                              </span>
-                              <span className="ml-auto text-xs text-muted-foreground">
-                                Loading...
-                              </span>
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-
-            {/* Upgrade footer for non-Pro users */}
-            {!isTrial && !dyadProEnabled && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  data-testid="model-picker-unlock-all"
-                  className="px-2 py-2 bg-gradient-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/50 dark:to-sky-950/50 focus:from-indigo-100 focus:to-sky-100 dark:focus:from-indigo-950 dark:focus:to-sky-950"
-                  onClick={handleUnlockAllClick}
+            {/* Compact quick switcher. */}
+            <>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger
+                  className="w-full font-normal"
+                  {...NAVIGATION_SUBMENU_HOVER_PROPS}
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <SparklesIcon className="size-3.5 text-indigo-600 dark:text-indigo-300 shrink-0" />
-                    <span className="text-[13px] font-medium text-indigo-700 dark:text-indigo-300">
-                      Unlock all models with Dyad Pro
-                    </span>
+                  <span>All models</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent
+                  className={cn(MODEL_MENU_WIDTH_CLASS, SCROLL_AREA_CLASS)}
+                  data-testid="more-models-submenu"
+                  data-catalog-loading={loading}
+                >
+                  <DropdownMenuLabel>All models</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {loading ? (
+                    <div className="text-xs text-center py-2 text-muted-foreground">
+                      Loading cloud models...
+                    </div>
+                  ) : !hasCloudCatalogEntries ? (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      {cloudCatalogError
+                        ? "Couldn’t load cloud models"
+                        : "No cloud models available"}
+                    </div>
+                  ) : (
+                    <>
+                      {(() => {
+                        const nodes: ReactNode[] = [];
+                        cloudCatalogGroups.forEach(
+                          ({ tier, entries }, index) => {
+                            if (index > 0) {
+                              nodes.push(
+                                <DropdownMenuSeparator
+                                  key={`tier-sep-${tier.label}`}
+                                />,
+                              );
+                            }
+                            nodes.push(
+                              <div
+                                key={`tier-label-${tier.label}`}
+                                className="flex items-center gap-1.5 px-2 pt-1.5 pb-1"
+                              >
+                                <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground shrink-0">
+                                  {tier.label}
+                                </span>
+                                <span
+                                  aria-hidden="true"
+                                  className="size-[3px] rounded-full bg-muted-foreground/50 shrink-0"
+                                />
+                                <span className="text-[11px] text-muted-foreground/85 truncate">
+                                  {tier.caption}
+                                </span>
+                              </div>,
+                            );
+                            entries.forEach(({ providerId, model }) => {
+                              nodes.push(
+                                renderCloudModelItem({ providerId, model }),
+                              );
+                            });
+                          },
+                        );
+                        return nodes;
+                      })()}
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <div
+                    className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
+                    data-testid="local-providers-section"
+                  >
+                    Local providers
                   </div>
-                </DropdownMenuItem>
-              </>
-            )}
+                  {renderLocalProviderSubmenu({
+                    providerId: "ollama",
+                    label: "Ollama",
+                    models: ollamaModels,
+                    loading: ollamaLoading,
+                    error: ollamaError,
+                  })}
+                  {renderLocalProviderSubmenu({
+                    providerId: "lmstudio",
+                    label: "LM Studio",
+                    models: lmStudioModels,
+                    loading: lmStudioLoading,
+                    error: lmStudioError,
+                  })}
+                  {otherProviderEntries.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div
+                        className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
+                        data-testid="cloud-providers-section"
+                      >
+                        Cloud providers
+                      </div>
+                      {otherProviderEntries.map(([providerId, models]) =>
+                        renderProviderSubmenu(providerId, models),
+                      )}
+                    </>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              <DropdownMenuSeparator />
+
+              {loading ? (
+                <div className="text-xs text-center py-2 text-muted-foreground">
+                  Loading models...
+                </div>
+              ) : (
+                <>
+                  {cloudCatalogError && recentModelEntries.length === 0 && (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Couldn’t load cloud models
+                    </div>
+                  )}
+
+                  {recentModelEntries.length > 0 && (
+                    <>
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Recent
+                      </DropdownMenuLabel>
+                      {recentModelEntries.map((entry) => {
+                        if (entry.type === "cloud") {
+                          return renderCloudModelItem({
+                            providerId: entry.providerId,
+                            model: entry.model,
+                          });
+                        }
+                        if (entry.type === "local") {
+                          return renderLocalModelItem(
+                            entry.providerId,
+                            entry.model,
+                          );
+                        }
+                        return (
+                          <DropdownMenuItem
+                            key={`${entry.providerId}-${entry.modelName}-loading`}
+                            disabled
+                            aria-label={`${entry.modelName}. Loading local model`}
+                            className="py-1.5"
+                          >
+                            <ProviderIcon providerId={entry.providerId} />
+                            <span className="min-w-0 truncate text-[13px]">
+                              {entry.modelName}
+                            </span>
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              Loading...
+                            </span>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+              )}
+            </>
           </SubscriptionModelMenu>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -1667,57 +1427,23 @@ export function ModelPicker() {
           className="sm:max-w-md"
           data-testid="unlock-model-dialog"
         >
-          {/* Free models aren't a Pro feature, so don't sell Pro for them —
-              they just need the user's own (free) provider API key. */}
-          {unlockTargetIsFreeModel ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  Use {unlockTarget?.model.displayName} with your own{" "}
-                  {unlockTargetProviderName} API key
-                </DialogTitle>
-                <DialogDescription>
-                  Free models run through your own {unlockTargetProviderName}{" "}
-                  account. Add an API key in provider settings to use this
-                  model.
-                </DialogDescription>
-              </DialogHeader>
-              <Button
-                className="cursor-pointer w-full"
-                onClick={handleUnlockDialogOwnKeyClick}
-              >
-                Add {unlockTargetProviderName} API key
-              </Button>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  Unlock {unlockTarget?.model.displayName} with Dyad Pro
-                </DialogTitle>
-                <DialogDescription>
-                  Dyad Pro gives you {unlockTarget?.model.displayName} and every
-                  other leading AI model with one subscription — no API keys
-                  needed.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col gap-3">
-                <Button
-                  className="cursor-pointer w-full"
-                  onClick={handleUnlockDialogUpgradeClick}
-                >
-                  Get Dyad Pro
-                </Button>
-                <button
-                  type="button"
-                  className="cursor-pointer text-sm text-primary hover:underline underline-offset-4"
-                  onClick={handleUnlockDialogOwnKeyClick}
-                >
-                  Or use your own {unlockTargetProviderName} API key
-                </button>
-              </div>
-            </>
-          )}
+          {/* Locked models just need the user's own provider API key. */}
+          <DialogHeader>
+            <DialogTitle>
+              Use {unlockTarget?.model.displayName} with your own{" "}
+              {unlockTargetProviderName} API key
+            </DialogTitle>
+            <DialogDescription>
+              This model runs through your own {unlockTargetProviderName}{" "}
+              account. Add an API key in provider settings to use it.
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            className="cursor-pointer w-full"
+            onClick={handleUnlockDialogOwnKeyClick}
+          >
+            Add {unlockTargetProviderName} API key
+          </Button>
         </DialogContent>
       </Dialog>
     </>

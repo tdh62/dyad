@@ -27,7 +27,6 @@ const debugInfo: SystemDebugInfo = {
   platform: "linux",
   architecture: "x64",
   logs: "some logs",
-  updaterLogs: null,
   selectedLanguageModel: "auto",
 };
 
@@ -325,75 +324,6 @@ describe("formatDiagnosticsSections", () => {
   });
 });
 
-describe("updater log section", () => {
-  // formatUpdaterLogsForIssueBody leaves the important text at a different end
-  // depending on which branch it takes, so each branch is pinned separately.
-  const squirrelTail = (n: number) =>
-    Array.from(
-      { length: n },
-      (_, i) =>
-        `2026-08-30 12:${String(i).padStart(2, "0")}:00 [info] checking for update ${i}\r\n`,
-    ).join("");
-
-  function updaterSectionOf(updaterLogs: string): string {
-    const body = buildIssueBody({
-      description: "it crashed",
-      screenshot: { status: "declined" },
-      diagnostics: { ...diagnostics, debugInfo: { ...debugInfo, updaterLogs } },
-      sessionId: null,
-    });
-    return body.slice(body.indexOf("## Auto-Updater Logs"));
-  }
-
-  it("keeps a long error section, which leads its own output", () => {
-    const section = updaterSectionOf(
-      "Last updater error (this session):\n" +
-        "System.Net.WebException: The remote server returned an error: (403) Forbidden.\n" +
-        Array.from(
-          { length: 30 },
-          (_, i) => `   at Squirrel.UpdateManager.Frame${i}(String url)\n`,
-        ).join(""),
-    );
-    expect(section).toContain("Last updater error (this session):");
-    expect(section).toContain("System.Net.WebException");
-  });
-
-  it("keeps the error identity when the section overflows only once encoded", () => {
-    const section = updaterSectionOf(
-      "Last updater error (this session):\r\n" +
-        "System.Net.WebException: The remote server returned an error: (403) Forbidden.\r\n" +
-        Array.from(
-          { length: 4 },
-          (_, i) =>
-            `   at Squirrel.UpdateManager.<CheckForUpdate>d__${i}.MoveNext() in C:\\proj\\Squirrel\\UpdateManager.cs:line ${i}\r\n`,
-        ).join("") +
-        "\n\nSquirrelSetup.log (tail):\n" +
-        squirrelTail(40),
-    );
-    expect(section).toContain("Last updater error (this session):");
-    expect(section).toContain("System.Net.WebException");
-  });
-
-  it("keeps the error section when it is appended after the Squirrel tail", () => {
-    const section = updaterSectionOf(
-      "Last updater error (this session):\n" +
-        "ERR_CONNECTION_REFUSED at https://update.dyad.sh\n" +
-        "\n\nSquirrelSetup.log (tail):\n" +
-        squirrelTail(40),
-    );
-    expect(section).toContain("Last updater error (this session):");
-    expect(section).toContain("ERR_CONNECTION_REFUSED");
-  });
-
-  it("keeps the most recent lines when there is no error section at all", () => {
-    const section = updaterSectionOf(
-      squirrelTail(40) +
-        "2026-08-30 13:00:00 [error] Update failed: EPERM cannot rename app-0.9.1\r\n",
-    );
-    expect(section).toContain("EPERM cannot rename app-0.9.1");
-  });
-});
-
 describe("diagnostics field caps", () => {
   // A custom model id and a node path are user-controlled and otherwise
   // unbounded, and the model name reaches the body twice.
@@ -432,7 +362,6 @@ describe("diagnostics field caps", () => {
             selectedLanguageModel: "\u754c".repeat(2_000),
             nodePath: "\u754c".repeat(2_000),
             logs: "log line\n".repeat(2_000),
-            updaterLogs: "updater line\n".repeat(2_000),
           },
           settings: {
             selectedModel: {
@@ -477,10 +406,6 @@ describe("issue URL budget", () => {
     logs: "[2026-08-29 14:22:07.318] [info] (chat_stream) chunk len=512\n".repeat(
       200,
     ),
-    updaterLogs:
-      "[2026-08-29 14:20:01.002] [info] (updater) checking for update\n".repeat(
-        100,
-      ),
   };
 
   const worstCaseDiagnostics = {
@@ -545,7 +470,6 @@ describe("issue URL budget", () => {
           debugInfo: {
             ...worstCaseDebugInfo,
             logs: line.repeat(500),
-            updaterLogs: line.repeat(200),
           },
         },
         sessionId: "v2:0199c3f1-2a5b-7c8d-9e0f-1a2b3c4d5e6f",
@@ -660,20 +584,6 @@ describe("issue URL budget", () => {
       }),
     });
     expect(url.length).toBeLessThan(ISSUE_URL_CEILING);
-  });
-
-  it("holds the updater section to its own encoded budget", () => {
-    const body = buildIssueBody({
-      description: "it crashed",
-      screenshot: { status: "declined" },
-      diagnostics: {
-        ...diagnostics,
-        debugInfo: { ...debugInfo, updaterLogs: "\u754c".repeat(3_000) },
-      },
-      sessionId: null,
-    });
-    const section = body.slice(body.indexOf("## Auto-Updater Logs"));
-    expect(encoded(section)).toBeLessThan(800);
   });
 
   it("keeps the end of the log, where the failure is", () => {

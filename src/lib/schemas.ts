@@ -556,6 +556,9 @@ const BaseUserSettingsFields = {
   // it has always had.
   enableOwnServerDeployment: z.boolean().optional(),
   enableTestRunInPreview: z.boolean().optional(),
+  // DEPRECATED. The app no longer checks for or installs its own updates, so
+  // these two are stored-but-ignored legacy fields kept only so settings files
+  // written by older builds still parse.
   enableAutoUpdate: z.boolean(),
   releaseChannel: ReleaseChannelSchema,
   runtimeMode2: RuntimeMode2Schema.optional(),

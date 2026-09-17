@@ -1,10 +1,6 @@
 import { type SystemDebugInfo } from "@/ipc/types";
 import { type UserBudgetInfo } from "@/ipc/types/system";
 import { type ModelSelection, type UserSettings } from "@/lib/schemas";
-import {
-  LAST_UPDATER_ERROR_HEADER,
-  formatUpdaterLogsForIssueBody,
-} from "@/lib/debugLogFormatting";
 
 /**
  * What happened when we offered to take a screenshot. Recorded in the issue
@@ -68,9 +64,6 @@ export const LOG_ISSUE_BODY_LIMIT = 2_000;
  * only inputs to the body with no bound, and the model name appears twice.
  */
 const DIAGNOSTIC_FIELD_LIMIT = 120;
-
-/** Encoded ceiling applied on top of the updater log's own summarising. */
-const UPDATER_LOG_ENCODED_LIMIT = 600;
 
 /**
  * Capture failures put their raw message in the body. Every other input is
@@ -327,51 +320,13 @@ function formatSystemInfoSection(
 - Model: ${field(debugInfo.selectedLanguageModel || "n/a")}`;
 }
 
-/**
- * Holds the updater section to the encoded budget without cutting away the
- * error it exists to carry.
- *
- * formatUpdaterLogsForIssueBody leaves the important text at a different end
- * depending on which branch it took: leading, when the error section alone
- * overflows and it returns that section head-first; trailing, when it
- * assembles the Squirrel tail and appends the error section after it, and also
- * when it found no error header and fell back to the most recent lines. Only
- * the first case starts with the header, so that is what picks the direction.
- * Its own budget is counted in raw characters while this one is encoded, so
- * this fires for most real Windows logs rather than as a rare backstop.
- */
-function clampUpdaterLogs(formatted: string): string {
-  if (encodedLength(formatted) <= UPDATER_LOG_ENCODED_LIMIT) return formatted;
-  // lastIndexOf, not startsWith: the assembled branch appends the error
-  // section after the Squirrel tail, so the header is not first there.
-  const errorStart = formatted.lastIndexOf(LAST_UPDATER_ERROR_HEADER);
-  if (errorStart === -1) {
-    return clampTailToEncoded(formatted, UPDATER_LOG_ENCODED_LIMIT);
-  }
-  const errorSection = formatted.slice(errorStart);
-  // When the error fits, keep it whole and spend what is left on the lines
-  // before it. When it does not, keep its head: the exception type and
-  // message lead it, and a stack with no exception on it says nothing.
-  return encodedLength(errorSection) <= UPDATER_LOG_ENCODED_LIMIT
-    ? clampTailToEncoded(formatted, UPDATER_LOG_ENCODED_LIMIT)
-    : clampToEncoded(errorSection, UPDATER_LOG_ENCODED_LIMIT);
-}
-
 function formatLogsSection(debugInfo: SystemDebugInfo): string {
   // Keep the logs small: the issue body travels in the GitHub URL, and the
-  // budget above assumes both of these sections are capped.
-  const updaterSection = debugInfo.updaterLogs
-    ? `
-
-## Auto-Updater Logs
-\`\`\`
-${clampUpdaterLogs(formatUpdaterLogsForIssueBody(debugInfo.updaterLogs))}
-\`\`\``
-    : "";
+  // budget above assumes this section is capped.
   return `## Logs
 \`\`\`
 ${clampTailToEncoded(debugInfo.logs, LOG_ISSUE_BODY_LIMIT) || "No logs available"}
-\`\`\`${updaterSection}`;
+\`\`\``;
 }
 
 /**

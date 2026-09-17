@@ -178,25 +178,6 @@ describe("ProviderSettingsPage", () => {
     });
   });
 
-  it("resumes an implicit first prompt with the new Dyad Pro default", async () => {
-    mocks.hasArmedPayload = true;
-    mocks.validateProviderApiKey.mockResolvedValue(undefined);
-    mocks.updateSettings.mockResolvedValue(undefined);
-
-    renderProviderSettingsPage("auto");
-    await saveApiKey("Dyad", "auto");
-
-    await waitFor(() =>
-      expect(mocks.sendFirstPrompt).toHaveBeenCalledWith({
-        providerSettings: {
-          auto: { apiKey: { value: "test-google-key" } },
-        },
-        enableDyadPro: true,
-        defaultChatMode: "local-agent",
-      }),
-    );
-  });
-
   it("does not auto-submit when replacing an existing provider key", async () => {
     mocks.anyProviderSetup = true;
     mocks.hasArmedPayload = true;

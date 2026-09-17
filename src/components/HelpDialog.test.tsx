@@ -160,7 +160,6 @@ const debugInfo = {
   platform: "linux",
   architecture: "x64",
   logs: "logs",
-  updaterLogs: null,
   selectedLanguageModel: "auto",
 };
 
@@ -168,7 +167,6 @@ const bundle = {
   chat: { messages: [{ id: 1, role: "user", content: "hi" }] },
   codebase: "codebase",
   logs: "logs",
-  updaterLogs: null,
   system: debugInfo,
   settings: {},
   app: {},

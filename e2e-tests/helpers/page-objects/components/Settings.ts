@@ -30,10 +30,6 @@ export class Settings {
       .click();
   }
 
-  async toggleAutoUpdate() {
-    await this.page.getByRole("switch", { name: "Auto-update" }).click();
-  }
-
   async disableAppBlueprint() {
     await this.page.evaluate(async () => {
       await (window as any).electron.ipcRenderer.invoke("set-user-settings", {
@@ -59,13 +55,6 @@ export class Settings {
     if (ariaChecked !== "true") {
       await label.click();
     }
-  }
-
-  async changeReleaseChannel(channel: "stable" | "beta") {
-    await this.page.getByRole("combobox", { name: "Release Channel" }).click();
-    await this.page
-      .getByRole("option", { name: channel === "stable" ? "Stable" : "Beta" })
-      .click();
   }
 
   async changeRuntimeMode(mode: "host" | "docker" | "cloud") {

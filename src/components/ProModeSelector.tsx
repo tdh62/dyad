@@ -5,27 +5,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Info } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useSettings } from "@/hooks/useSettings";
-import { ipc } from "@/ipc/types";
 import { hasDyadProKey } from "@/lib/schemas";
 
 export function ProModeSelector() {
   const { settings, updateSettings } = useSettings();
   const subscription = useSubscriptionAccount();
-
-  const toggleProEnabled = () => {
-    updateSettings({
-      enableDyadPro: !settings?.enableDyadPro,
-    });
-  };
 
   const hasProKey = settings ? hasDyadProKey(settings) : false;
 
@@ -51,19 +43,6 @@ export function ProModeSelector() {
             </h4>
             <div className="h-px bg-gradient-to-r from-primary/50 via-primary/20 to-transparent" />
           </div>
-          {!hasProKey && (
-            <div className="text-sm text-center text-muted-foreground">
-              <a
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary shadow-sm transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
-                onClick={() => {
-                  ipc.system.openExternalUrl("https://dyad.sh/pro#ai");
-                }}
-                title="Visit dyad.sh/pro to unlock Pro features"
-              >
-                Unlock Pro modes
-              </a>
-            </div>
-          )}
           {hasProKey && (
             <div className="space-y-2">
               <Label>Model usage</Label>
@@ -115,57 +94,8 @@ export function ProModeSelector() {
               </ToggleGroup>
             </div>
           )}
-          <SelectorRow
-            id="pro-enabled"
-            label="Enable Dyad Pro"
-            tooltip="Uses your selected model usage source and Dyad Pro credits for Pro features."
-            isTogglable={hasProKey}
-            settingEnabled={Boolean(settings?.enableDyadPro)}
-            toggle={toggleProEnabled}
-          />
         </div>
       </PopoverContent>
     </Popover>
-  );
-}
-
-function SelectorRow({
-  id,
-  label,
-  tooltip,
-  isTogglable,
-  settingEnabled,
-  toggle,
-}: {
-  id: string;
-  label: string;
-  tooltip: string;
-  isTogglable: boolean;
-  settingEnabled: boolean;
-  toggle: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-1.5">
-        <Label
-          htmlFor={id}
-          className={!isTogglable ? "text-muted-foreground/50" : ""}
-        >
-          {label}
-        </Label>
-        <span title={tooltip}>
-          <Info
-            className={`h-4 w-4 cursor-help ${!isTogglable ? "text-muted-foreground/50" : "text-muted-foreground"}`}
-          />
-        </span>
-      </div>
-      <Switch
-        id={id}
-        aria-label={label}
-        checked={isTogglable ? settingEnabled : false}
-        onCheckedChange={toggle}
-        disabled={!isTogglable}
-      />
-    </div>
   );
 }

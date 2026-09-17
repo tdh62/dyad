@@ -196,11 +196,6 @@ export function ReportDisclosures({
               {bundle.codebase}
             </Detail>
             <Detail title={t("home:help.logs")}>{bundle.logs}</Detail>
-            {bundle.updaterLogs && (
-              <Detail title={t("home:report.updaterLogs")}>
-                {bundle.updaterLogs}
-              </Detail>
-            )}
             <Detail title={t("home:help.systemInformation")} mono={false}>
               <p>
                 {t("home:help.dyadVersion")} {bundle.system.dyadVersion}
