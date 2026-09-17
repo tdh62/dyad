@@ -146,6 +146,15 @@ const ignore = (file: string) => {
   return true;
 };
 
+// 本构筑（内网 / 离线版）的产物名，必须三处一致：
+//   1. electron-packager 的可执行文件名（packagerConfig.name）
+//   2. Squirrel 安装标识
+//   3. Linux deb/rpm 包内的可执行文件名
+// Linux 的 installer（electron-installer-common）默认按 package.json 的
+// name（本仓库为 "dyad"）去定位包内二进制，与 packagerConfig.name 不一致时
+// 会以 "could not find the Electron app binary" 直接构筑失败。
+const BUILD_EXECUTABLE_NAME = "dyad-offline";
+
 const isEndToEndTestBuild = process.env.E2E_TEST_BUILD === "true";
 const isWindowsSigningEnabled = process.env.WINDOWS_SIGN === "true";
 const shouldSkipNativeRebuild = process.env.DYAD_SKIP_NATIVE_REBUILD === "true";
@@ -168,7 +177,7 @@ const config: ForgeConfig = {
     // 本构筑（内网 / 离线版）使用独立的可执行文件名、输出目录与安装标识，
     // 与上游 dyad 构筑互不覆盖。运行时的 userData 隔离见 src/paths/paths.ts
     // 的 BUILD_USER_DATA_DIR_NAME 与 src/main.ts 的启动设置。
-    name: "dyad-offline",
+    name: BUILD_EXECUTABLE_NAME,
     // E2E test builds install local file: dependencies as links on Windows.
     // Dereference them so packaging does not require symlink privileges in the temp app.
     // Local file: native packages install as symlinks; dereference them so the
@@ -239,14 +248,14 @@ const config: ForgeConfig = {
         ? {
             // 独立安装标识：Squirrel 的 appId 由此派生，避免与上游 dyad
             // 安装到同一位置互相覆盖。
-            name: "dyad-offline",
+            name: BUILD_EXECUTABLE_NAME,
             windowsSign,
             iconUrl:
               "https://raw.githubusercontent.com/dyad-sh/dyad/main/assets/icon/logo.ico",
             setupIcon: "./assets/icon/logo.ico",
           }
         : {
-            name: "dyad-offline",
+            name: BUILD_EXECUTABLE_NAME,
             iconUrl:
               "https://raw.githubusercontent.com/dyad-sh/dyad/main/assets/icon/logo.ico",
             setupIcon: "./assets/icon/logo.ico",
@@ -255,12 +264,19 @@ const config: ForgeConfig = {
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({
       options: {
+        // installer 默认按 package.json 的 name（"dyad"）生成包名并定位包内
+        // 可执行文件；这里显式对齐本构筑的产物名，既修复构筑失败，也避免与
+        // 上游 dyad 的 rpm 互相覆盖。
+        name: BUILD_EXECUTABLE_NAME,
+        bin: BUILD_EXECUTABLE_NAME,
         mimeType: ["x-scheme-handler/dyad"],
         icon: "./assets/icon/logo.png",
       },
     }),
     new MakerDeb({
       options: {
+        name: BUILD_EXECUTABLE_NAME,
+        bin: BUILD_EXECUTABLE_NAME,
         mimeType: ["x-scheme-handler/dyad"],
         icon: "./assets/icon/logo.png",
       },

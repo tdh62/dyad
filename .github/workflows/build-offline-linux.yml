@@ -1,0 +1,94 @@
+# 内网 / 离线版（dyad-offline）的 Linux 安装包构筑。
+#
+# 与 release.yml 的正式发布流程完全独立，互不影响：
+# - 只构建 Linux x64（ubuntu-22.04 runner）
+# - 不做代码签名（Linux 发行版无需签名）
+# - 不打 tag、不创建 GitHub Release，只上传可下载的构建产物
+#
+# 触发方式：Actions → "Build offline Linux packages" → Run workflow
+#
+# 产物：workflow 运行完成后，在该次运行的 Artifacts 中下载
+#       `dyad-offline-linux`，解压后包含：
+#       - out/make/deb/x64/dyad-offline_<version>_amd64.deb
+#       - out/make/rpm/x64/dyad-offline-<version>-1.x86_64.rpm
+#       - out/make/AppImage/dyad-offline_<version>_x86_64.AppImage
+name: Build offline Linux packages
+
+permissions:
+  contents: read
+
+on:
+  # 手动触发：Actions → "Build offline Linux packages" → Run workflow
+  workflow_dispatch:
+  # 本 workflow 自身变更时自动构建一次，便于验证构筑配置的改动。
+  # 其他源码推送不会触发，避免无谓消耗 CI。
+  push:
+    paths:
+      - ".github/workflows/build-offline-linux.yml"
+
+concurrency:
+  group: build-offline-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-linux:
+    name: Build Linux packages
+    # 与 release.yml 的 linux 目标保持一致，避免 glibc 版本差异。
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Github checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Use Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: v24.13.1
+          # 与 release.yml 一致：不使用 GitHub Actions 缓存做构建。
+          package-manager-cache: false
+      - name: Install npm 11.8.0
+        run: npm install -g npm@11.8.0
+      - name: Install Linux packaging tools
+        # rpmbuild   → MakerRpm
+        # mksquashfs → MakerAppImage
+        # fakeroot + dpkg → MakerDeb（runner 通常自带，显式安装以避免镜像差异）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm squashfs-tools fakeroot dpkg
+      - name: Use clang 18 for Linux native rebuilds
+        # 与 release.yml 相同：better-sqlite3 / node-pty / mustardscript
+        # 等 native 模块在 Ubuntu 22.04 上用 clang 18 重编译。
+        run: |
+          sudo install -d -m 0755 /etc/apt/keyrings
+          wget -qO /tmp/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key
+          gpg --dearmor /tmp/llvm-snapshot.gpg.key
+          sudo install -m 0644 /tmp/llvm-snapshot.gpg.key.gpg /etc/apt/keyrings/apt.llvm.org.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] https://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | sudo tee /etc/apt/sources.list.d/llvm-toolchain-jammy-18.list
+          # 保留 runner 自带的包索引，避免刷新无关的 Ubuntu 镜像源。
+          sudo apt-get update \
+            -o Dir::Etc::sourcelist="sources.list.d/llvm-toolchain-jammy-18.list" \
+            -o Dir::Etc::sourceparts="-" \
+            -o APT::Get::List-Cleanup="0"
+          sudo apt-get install -y clang-18
+          echo "CC=clang-18" >> "$GITHUB_ENV"
+          echo "CXX=clang++-18" >> "$GITHUB_ENV"
+      - run: npm ci
+        env:
+          # @vscode/ripgrep 下载二进制时需要，避免 GitHub API 限流。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Linux packages
+        # `npm run make` = rebuild:keychain-reader（非 macOS 时为 no-op）
+        #                 + clean + electron-forge make
+        #
+        # 刻意不设置任何签名相关变量：deb / rpm / AppImage 都不需要签名。
+        run: npm run make
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: List build output
+        run: find out/make -type f -printf '%p  %s bytes\n' | sort
+      - name: Upload packages
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: dyad-offline-linux
+          path: out/make/**/*
+          # deb / rpm / AppImage 三者都应存在；缺失时让 job 明确失败。
+          if-no-files-found: error
+          retention-days: 14
