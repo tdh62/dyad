@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { defineContract, createClient } from "../contracts/core";
+import { ApiProtocolSchema } from "../shared/api_protocol";
 
 // =============================================================================
 // Language Model Schemas
@@ -16,6 +17,11 @@ export const LanguageModelProviderSchema = z.object({
   apiBaseUrl: z.string().optional(),
   type: z.enum(["custom", "local", "cloud"]),
   isCustom: z.boolean().optional(),
+  /**
+   * 自定义 Provider 的线上协议。未设置时按 `chat-completions` 处理，
+   * 因此既有 provider 无需迁移即可保持原有行为。
+   */
+  apiProtocol: ApiProtocolSchema.optional(),
 });
 
 export type LanguageModelProvider = z.infer<typeof LanguageModelProviderSchema>;
@@ -68,6 +74,8 @@ export const CreateCustomLanguageModelProviderParamsSchema = z.object({
   name: z.string(),
   apiBaseUrl: z.string(),
   envVarName: z.string().optional(),
+  /** 缺省为 `chat-completions`（等价于改造前的行为）。 */
+  apiProtocol: ApiProtocolSchema.optional(),
 });
 
 export type CreateCustomLanguageModelProviderParams = z.infer<

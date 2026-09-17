@@ -3,6 +3,7 @@ import type { ModelMessage } from "ai";
 import { createHash } from "node:crypto";
 import log from "electron-log";
 import { usesOpenAIResponsesApi } from "./openai_responses_utils";
+import type { ApiProtocol } from "@/ipc/shared/api_protocol";
 
 const logger = log.scope("ai_messages_utils");
 
@@ -18,7 +19,15 @@ const MAX_TOOL_CALL_ID_LENGTH = 64;
 export function shouldNormalizeToolCallIdsForOpenAIResponses(
   selectedProviderId: string,
   selectedModelName: string,
+  /**
+   * 自定义 Provider 声明的线上协议。为 `responses` 时同样受 OpenAI
+   * Responses 的 64 字符 call_id 限制，因此必须一并规范化。
+   */
+  apiProtocol?: ApiProtocol,
 ): boolean {
+  if (apiProtocol === "responses") {
+    return true;
+  }
   return (
     // Auto normally starts with OpenAI Responses. Prefer keeping that common
     // path working across provider switches; a rare same-turn fallback to

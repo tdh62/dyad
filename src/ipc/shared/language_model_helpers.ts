@@ -13,6 +13,8 @@ import {
   PROVIDER_TO_ENV_VAR,
 } from "./language_model_constants";
 import { getBuiltinLanguageModelCatalog } from "./remote_language_model_catalog";
+import { FREE_PRO_MODEL_PROVIDER } from "@/lib/freeProModel";
+import { ApiProtocolSchema } from "./api_protocol";
 
 const logger = log.scope("language_model_helpers");
 /**
@@ -36,6 +38,8 @@ export async function getLanguageModelProviders(): Promise<
       apiBaseUrl: cp.api_base_url,
       envVarName: cp.env_var_name ?? undefined,
       type: "custom",
+      // 非法或历史遗留值一律归一化为 undefined（消费侧按 chat-completions 处理）。
+      apiProtocol: ApiProtocolSchema.safeParse(cp.api_protocol).data,
       // hasFreeTier, websiteUrl, gatewayPrefix are not in the custom DB schema
       // They will be undefined unless overridden by hardcoded values if IDs match
     });
@@ -84,7 +88,13 @@ export async function getLanguageModelProviders(): Promise<
     }
   }
 
-  return [...hardcodedProviders, ...customProvidersMap.values()];
+  // 内网 / 离线版本：不暴露 Dyad 云端模型供应商（`auto`：auto / free /
+  // free-pro / balanced / value 等全部由 Dyad Engine 承载）。
+  // 用户只能选择本地模型（Ollama / LM Studio）或自带 API Key / 局域网地址
+  // 的供应商。
+  return [...hardcodedProviders, ...customProvidersMap.values()].filter(
+    (provider) => provider.id !== FREE_PRO_MODEL_PROVIDER,
+  );
 }
 
 /**

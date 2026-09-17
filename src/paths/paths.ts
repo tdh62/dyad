@@ -4,6 +4,15 @@ import fs from "node:fs";
 import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
 import { readSettings } from "../main/settings";
 
+/**
+ * 本构筑（内网 / 离线版）专属的 userData 目录名。
+ *
+ * 上游 dyad 使用 `%APPDATA%/dyad`，本构筑使用独立目录，从而让
+ * `sqlite.db`、`settings.json` 等运行时数据完全隔离，两个构筑同时
+ * 安装也不会互相覆盖。需要再次分叉构筑时，改这一处即可。
+ */
+export const BUILD_USER_DATA_DIR_NAME = "dyad-offline";
+
 // Cached result of getDyadAppsBaseDirectory
 let cachedBaseDirectory: string | null = null;
 let cachedCustomFolderSetting: string | null | undefined;

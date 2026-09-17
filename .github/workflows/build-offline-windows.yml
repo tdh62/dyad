@@ -1,0 +1,63 @@
+# 内网 / 离线版（dyad-offline）的 Windows 安装包构筑。
+#
+# 与 release.yml 的正式发布流程完全独立，互不影响：
+# - 只构建 Windows（windows-2022 runner 自带 MSVC 与 Python，满足 native 重编译）
+# - 不做代码签名（无需 Azure / Apple secrets）
+# - 不打 tag、不创建 GitHub Release，只上传可下载的构建产物
+#
+# 触发方式：Actions → "Build offline Windows installer" → Run workflow
+#
+# 产物：workflow 运行完成后，在该次运行的 Artifacts 中下载
+#       `dyad-offline-windows`，解压后为
+#       `out/make/squirrel.windows/x64/dyad-offline-<version> Setup.exe`
+name: Build offline Windows installer
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: build-offline-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build Windows installer
+    runs-on: windows-2022
+    steps:
+      - name: Github checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Use Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: v24.13.1
+          # 与 release.yml 一致：不使用 GitHub Actions 缓存做构建。
+          package-manager-cache: false
+      - name: Install npm 11.8.0
+        run: npm install -g npm@11.8.0
+      - run: npm ci
+        env:
+          # @vscode/ripgrep 下载二进制时需要，避免 GitHub API 限流。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Windows installer
+        # `npm run make` = rebuild:keychain-reader（非 macOS 时为 no-op）
+        #                 + clean + electron-forge make
+        #
+        # 刻意不设置 WINDOWS_SIGN：forge.config.ts 会因此走无签名分支，
+        # 且不会要求 AZURE_CODE_SIGNING_DLIB。
+        run: npm run make
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: List build output
+        shell: pwsh
+        run: Get-ChildItem -Recurse out/make | Select-Object FullName, Length | Format-Table -AutoSize
+      - name: Upload installer
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: dyad-offline-windows
+          path: out/make/**/*
+          # Squirrel 与本构筑的安装包都应存在；缺失时让 job 明确失败。
+          if-no-files-found: error
+          retention-days: 14

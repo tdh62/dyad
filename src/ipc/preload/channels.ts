@@ -51,7 +51,6 @@ import { miscContracts, miscEvents } from "../types/misc";
 import { freeAgentQuotaContracts } from "../types/free_agent_quota";
 import { freeModelQuotaContracts } from "../types/free_model_quota";
 import { planEvents, planContracts } from "../types/plan";
-import { audioContracts } from "../types/audio";
 import { mediaContracts } from "../types/media";
 import {
   imageGenerationContracts,
@@ -142,7 +141,6 @@ export const VALID_INVOKE_CHANNELS = [
   ...getInvokeChannels(freeAgentQuotaContracts),
   ...getInvokeChannels(freeModelQuotaContracts),
   ...getInvokeChannels(planContracts),
-  ...getInvokeChannels(audioContracts),
   ...getInvokeChannels(mediaContracts),
   ...getInvokeChannels(appBlueprintContracts),
   ...getInvokeChannels(appCollectionContracts),

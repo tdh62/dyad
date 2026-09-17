@@ -102,6 +102,7 @@ import { encryptStoredMcpSecrets } from "./ipc/utils/mcp_secret_encryption";
 import fs from "fs";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
 import {
+  BUILD_USER_DATA_DIR_NAME,
   getDyadAppsBaseDirectory,
   getDyadAppPath,
   getUserDataPath,
@@ -194,6 +195,17 @@ if (process.env.NODE_ENV === "development") {
   const devCrashDumps = path.join(devUserData, "Crashpad");
   fs.mkdirSync(devCrashDumps, { recursive: true });
   app.setPath("crashDumps", devCrashDumps);
+} else if (!IS_TEST_BUILD) {
+  // 打包构筑：把 userData 指向本构筑专属目录，与上游 dyad 的
+  // %APPDATA%/dyad 完全隔离，避免两者共用或互相覆盖 sqlite.db 与设置。
+  // 与 dev 分支同理，必须在 electron-log 缓存其目录之前完成设置。
+  // E2E 测试构筑保持默认路径，避免影响测试夹具。
+  const buildUserData = path.join(
+    app.getPath("appData"),
+    BUILD_USER_DATA_DIR_NAME,
+  );
+  fs.mkdirSync(buildUserData, { recursive: true });
+  app.setPath("userData", buildUserData);
 }
 
 log.eventLogger.startLogging();

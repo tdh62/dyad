@@ -1,4 +1,6 @@
 import log from "electron-log";
+import { FREE_PRO_MODEL_PROVIDER } from "@/lib/freeProModel";
+import { ApiProtocolSchema } from "./api_protocol";
 import { z } from "zod";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
 import type {
@@ -30,7 +32,7 @@ const REMOTE_LANGUAGE_MODEL_CATALOG_TIMEOUT_MS = 5_000;
 const DEFAULT_CACHE_TTL_MS = 60 * 60 * 1000;
 const FALLBACK_CACHE_TTL_MS = 30 * 1000;
 
-function getRemoteLanguageModelCatalogUrl() {
+function getRemoteLanguageModelCatalogUrl(): string | null {
   if (process.env.DYAD_LANGUAGE_MODEL_CATALOG_URL) {
     return process.env.DYAD_LANGUAGE_MODEL_CATALOG_URL;
   }
@@ -39,7 +41,10 @@ function getRemoteLanguageModelCatalogUrl() {
     return `http://localhost:${process.env.FAKE_LLM_PORT}/api/language-model-catalog`;
   }
 
-  return "https://api.dyad.sh/v1/language-model-catalog";
+  // 内网 / 离线版本：默认不再访问 https://api.dyad.sh 的云端模型目录，
+  // 直接使用 app 内置目录（本地模型 + 自带 API Key 的供应商）。
+  // 需要局域网镜像时，设置 DYAD_LANGUAGE_MODEL_CATALOG_URL 覆盖即可。
+  return null;
 }
 
 export type { ThemeGenerationModelOption };
@@ -73,7 +78,7 @@ const CatalogModelSchema = z.object({
     .optional(),
 });
 
-const ApiProtocolSchema = z.enum(["responses", "chat-completions", "messages"]);
+
 
 const KNOWN_BUILTIN_MODEL_ALIASES = [
   "dyad/theme-generator/google",
@@ -148,9 +153,10 @@ const DEFAULT_THEME_GENERATION_OPTIONS: ThemeGenerationModelOption[] = [
 ];
 
 function buildFallbackCatalog(): BuiltinLanguageModelCatalog {
-  const providers: LanguageModelProvider[] = Object.entries(
-    CLOUD_PROVIDERS,
-  ).map(([providerId, provider]) => ({
+  // 内网 / 离线版本：内置目录同样不包含 Dyad 云端模型供应商。
+  const providers: LanguageModelProvider[] = Object.entries(CLOUD_PROVIDERS)
+    .filter(([providerId]) => providerId !== FREE_PRO_MODEL_PROVIDER)
+    .map(([providerId, provider]) => ({
     id: providerId,
     name: provider.displayName,
     hasFreeTier: provider.hasFreeTier,
@@ -276,8 +282,9 @@ function buildFallbackCatalog(): BuiltinLanguageModelCatalog {
 function convertRemoteCatalog(
   remoteCatalog: LanguageModelCatalogResponse,
 ): BuiltinLanguageModelCatalog {
-  const providers: LanguageModelProvider[] = remoteCatalog.providers.map(
-    (provider) => ({
+  const providers: LanguageModelProvider[] = remoteCatalog.providers
+    .filter((provider) => provider.id !== FREE_PRO_MODEL_PROVIDER)
+    .map((provider) => ({
       id: provider.id,
       name: provider.displayName,
       hasFreeTier: provider.hasFreeTier,
@@ -362,8 +369,15 @@ function convertRemoteCatalog(
 }
 
 async function fetchRemoteCatalog(): Promise<BuiltinLanguageModelCatalog | null> {
-  const controller = new AbortController();
   const catalogUrl = getRemoteLanguageModelCatalogUrl();
+  if (!catalogUrl) {
+    logger.info(
+      "Remote language model catalog disabled; using built-in catalog",
+    );
+    return null;
+  }
+
+  const controller = new AbortController();
   const timeoutId = setTimeout(
     () => controller.abort(),
     REMOTE_LANGUAGE_MODEL_CATALOG_TIMEOUT_MS,

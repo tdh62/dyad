@@ -661,6 +661,9 @@ export const language_model_providers = sqliteTable(
     name: text("name").notNull(),
     api_base_url: text("api_base_url").notNull(),
     env_var_name: text("env_var_name"),
+    // 自定义 Provider 的线上协议（ApiProtocol）。
+    // nullable：NULL 语义为 chat-completions，保证既有数据行为不变。
+    api_protocol: text("api_protocol"),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),

@@ -83,7 +83,6 @@ export { securityContracts } from "./security";
 export { miscContracts, miscEvents } from "./misc";
 export { freeAgentQuotaContracts } from "./free_agent_quota";
 export { freeModelQuotaContracts } from "./free_model_quota";
-export { audioContracts } from "./audio";
 export { mediaContracts } from "./media";
 export {
   imageGenerationContracts,
@@ -148,7 +147,6 @@ export { securityClient } from "./security";
 export { miscClient, miscEventClient } from "./misc";
 export { freeAgentQuotaClient } from "./free_agent_quota";
 export { freeModelQuotaClient } from "./free_model_quota";
-export { audioClient } from "./audio";
 export { mediaClient } from "./media";
 export {
   imageGenerationClient,
@@ -432,9 +430,6 @@ export type {
 export type { FreeAgentQuotaStatus } from "./free_agent_quota";
 export type { FreeModelQuotaStatus } from "./free_model_quota";
 
-// Pro types
-export type { TranscribeAudioParams, TranscribeAudioResult } from "./audio";
-
 // Media types
 export type {
   MediaFile,
@@ -550,7 +545,6 @@ import { securityClient } from "./security";
 import { miscClient, miscEventClient } from "./misc";
 import { freeAgentQuotaClient } from "./free_agent_quota";
 import { freeModelQuotaClient } from "./free_model_quota";
-import { audioClient } from "./audio";
 import { mediaClient } from "./media";
 import {
   imageGenerationClient,
@@ -636,7 +630,6 @@ export const ipc = {
   misc: miscClient,
   freeAgentQuota: freeAgentQuotaClient,
   freeModelQuota: freeModelQuotaClient,
-  audio: audioClient,
   media: mediaClient,
   appBlueprint: appBlueprintClient,
   appCollection: appCollectionClient,

@@ -666,8 +666,15 @@ export function migrateStoredSettings(
   };
 }
 
-export function isDyadProEnabled(settings: UserSettings): boolean {
-  return settings.enableDyadPro === true && hasDyadProKey(settings);
+/**
+ * 内网 / 离线版本：恒定按 Dyad Pro 身份处理。
+ *
+ * 这仅用于解除 Basic Agent 次数限制与各项 Pro 功能门槛，并不表示
+ * 可以访问 Dyad 云端服务 —— 本版本的模型能力全部来自局域网 API 或
+ * 本地模型，不依赖 api.dyad.sh / engine.dyad.sh。
+ */
+export function isDyadProEnabled(_settings: UserSettings): boolean {
+  return true;
 }
 
 export function hasDyadProKey(settings: UserSettings): boolean {
@@ -716,14 +723,12 @@ export function getEffectiveDefaultChatMode(
 
 /**
  * Determines if the current session is using Basic Agent mode (free tier with quota).
- * Basic Agent mode is when:
- * - User is NOT a Pro subscriber
- * - User is using local-agent chat mode
+ *
+ * 内网 / 离线版本：已移除 Basic Agent 免费额度概念，此处恒返回 false，
+ * 因此不会触发免费额度预留、次数统计与配额拦截。
  */
-export function isBasicAgentMode(settings: UserSettings): boolean {
-  return (
-    !isDyadProEnabled(settings) && settings.selectedChatMode === "local-agent"
-  );
+export function isBasicAgentMode(_settings: UserSettings): boolean {
+  return false;
 }
 
 export function isSupabaseConnected(settings: UserSettings | null): boolean {

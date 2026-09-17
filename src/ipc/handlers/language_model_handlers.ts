@@ -42,7 +42,7 @@ export function registerLanguageModelHandlers() {
       event: IpcMainInvokeEvent,
       params: CreateCustomLanguageModelProviderParams,
     ): Promise<LanguageModelProvider> => {
-      const { id, name, apiBaseUrl, envVarName } = params;
+      const { id, name, apiBaseUrl, envVarName, apiProtocol } = params;
 
       // Validation
       if (!id) {
@@ -87,6 +87,7 @@ export function registerLanguageModelHandlers() {
         name,
         api_base_url: apiBaseUrl,
         env_var_name: envVarName || null,
+        api_protocol: apiProtocol ?? null,
       });
 
       // Return the newly created provider
@@ -95,6 +96,7 @@ export function registerLanguageModelHandlers() {
         name,
         apiBaseUrl,
         envVarName,
+        apiProtocol,
         type: "custom",
       };
     },
@@ -248,7 +250,7 @@ export function registerLanguageModelHandlers() {
       event: IpcMainInvokeEvent,
       params: CreateCustomLanguageModelProviderParams,
     ): Promise<LanguageModelProvider> => {
-      const { id, name, apiBaseUrl, envVarName } = params;
+      const { id, name, apiBaseUrl, envVarName, apiProtocol } = params;
 
       if (!id) {
         throw new DyadError(
@@ -293,6 +295,7 @@ export function registerLanguageModelHandlers() {
             name,
             api_base_url: apiBaseUrl,
             env_var_name: envVarName || null,
+            api_protocol: apiProtocol ?? null,
           })
           .where(
             eq(languageModelProvidersSchema.id, CUSTOM_PROVIDER_PREFIX + id),
@@ -311,6 +314,7 @@ export function registerLanguageModelHandlers() {
           name,
           apiBaseUrl,
           envVarName,
+          apiProtocol,
           type: "custom" as const,
         };
       });

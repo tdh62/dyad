@@ -1,73 +1,23 @@
-import {
-  isDyadProEnabled,
-  type ModelSelection,
-  type UserSettings,
-} from "@/lib/schemas";
-import { resolveSubscriptionModel } from "./resolve_subscription_model";
-import { getCodexSubscriptionCredentials } from "./codex_subscription_auth";
-import {
-  checkExternalModelAdmission,
-  type ExternalModelAdmission,
-} from "./external_model_admission";
-import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
-import { getAutoSidekickRuntimeModel } from "@/lib/autoSidekick";
-import { shouldBillChatGPTSubscription } from "./subscription_billing";
-import {
-  AUTO_BALANCED_ALIAS,
-  AUTO_DYAD_PRO_MODEL_ALIASES,
-  resolveAutoModelCandidate,
-  type AutoModelCandidates,
-} from "./auto_model_candidates";
+import type { ModelSelection, UserSettings } from "@/lib/schemas";
+import type { ExternalModelAdmission } from "./external_model_admission";
+import type { AutoModelCandidates } from "./auto_model_candidates";
 
-/** Resolve once before durable acceptance. In-flight turns keep this selection. */
+/**
+ * 内网 / 离线版本：不再做 Dyad 订阅与外部模型计费预检。
+ *
+ * 模型解析直接使用调用方给定的标识，不访问 api.dyad.sh / engine.dyad.sh，
+ * 也不需要任何云端凭据。
+ */
 export async function preflightSubscriptionTurn(
   model: ModelSelection,
-  settings: UserSettings,
+  _settings: UserSettings,
   signal: AbortSignal,
-  autoModelCandidates?: AutoModelCandidates,
+  _autoModelCandidates?: AutoModelCandidates,
 ): Promise<{
   model: ModelSelection;
   externalModelAdmission?: ExternalModelAdmission;
 }> {
   signal.throwIfAborted();
-  const resolved = await resolveSubscriptionModel(model, settings);
-  const selections = [resolved];
-  const runtimeModel = getAutoSidekickRuntimeModel(resolved);
-  if (runtimeModel.provider === "auto" && resolved.connection === "pro") {
-    const aliases =
-      runtimeModel.name === "balanced"
-        ? [AUTO_BALANCED_ALIAS]
-        : runtimeModel.name === "auto"
-          ? AUTO_DYAD_PRO_MODEL_ALIASES
-          : [];
-    for (const alias of aliases) {
-      const candidate = await resolveAutoModelCandidate(alias, settings);
-      signal.throwIfAborted();
-      autoModelCandidates?.set(alias, candidate);
-      if (candidate) selections.push(candidate.selection);
-    }
-  }
-  signal.throwIfAborted();
-  if (selections.some((selection) => selection.connection === "subscription"))
-    await getCodexSubscriptionCredentials();
-  let externalModelAdmission: ExternalModelAdmission | undefined;
-  if (
-    isDyadProEnabled(settings) &&
-    selections.some(
-      (selection) =>
-        (selection.connection === "subscription" &&
-          shouldBillChatGPTSubscription(settings)) ||
-        selection.connection === "api-key",
-    )
-  ) {
-    const apiKey = settings.providerSettings?.auto?.apiKey?.value;
-    if (!apiKey)
-      throw new DyadError(
-        "Connect Dyad Pro before using an external model.",
-        DyadErrorKind.Auth,
-      );
-    externalModelAdmission = await checkExternalModelAdmission(apiKey, signal);
-  }
-  signal.throwIfAborted();
-  return { model: resolved, externalModelAdmission };
+  const { connection: _legacyConnection, ...identity } = model;
+  return { model: identity };
 }

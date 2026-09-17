@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { cloneElement, type ReactElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HomeChatInput } from "./HomeChatInput";
@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   appsLoading: false,
   setInputValue: vi.fn(),
   setSelectedApp: vi.fn(),
-  transcription: null as null | ((text: string) => void),
 }));
 
 vi.mock("jotai", async (importOriginal) => ({
@@ -59,20 +58,6 @@ vi.mock("@/hooks/useAttachments", () => ({
     cancelPendingFiles: vi.fn(),
   }),
 }));
-vi.mock("@/hooks/useVoiceToText", () => ({
-  useVoiceToText: ({
-    onTranscription,
-  }: {
-    onTranscription: (text: string) => void;
-  }) => {
-    mocks.transcription = onTranscription;
-    return {
-      isRecording: false,
-      isTranscribing: false,
-      toggleRecording: vi.fn(),
-    };
-  },
-}));
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => children,
   TooltipTrigger: ({
@@ -116,7 +101,6 @@ describe("HomeChatInput", () => {
     mocks.appsLoading = false;
     mocks.setInputValue.mockReset();
     mocks.setSelectedApp.mockReset();
-    mocks.transcription = null;
   });
 
   it("makes the entire snapshotted composer inert", () => {
@@ -131,13 +115,6 @@ describe("HomeChatInput", () => {
         .disabled,
     ).toBe(true);
     expect(
-      (
-        screen.getByRole("button", {
-          name: "Voice to text",
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
-    expect(
       (screen.getByTestId("home-app-selector") as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(
@@ -146,14 +123,6 @@ describe("HomeChatInput", () => {
     expect(
       composer?.contains(screen.getByRole("button", { name: "More actions" })),
     ).toBe(true);
-  });
-
-  it("ignores a transcription that completes after the payload is locked", () => {
-    render(<HomeChatInput onSubmit={vi.fn()} disabled />);
-
-    act(() => mocks.transcription?.("late transcript"));
-
-    expect(mocks.setInputValue).not.toHaveBeenCalled();
   });
 
   it("shows the app selector only when the loaded list contains an app", () => {

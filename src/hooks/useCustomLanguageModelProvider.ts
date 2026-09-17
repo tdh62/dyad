@@ -80,6 +80,7 @@ export function useCustomLanguageModelProvider() {
         name: params.name.trim(),
         apiBaseUrl: params.apiBaseUrl.trim(),
         envVarName: params.envVarName?.trim() || undefined,
+        apiProtocol: params.apiProtocol,
       });
     },
     onSuccess: () => {

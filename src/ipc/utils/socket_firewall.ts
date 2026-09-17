@@ -65,12 +65,7 @@ const DYAD_AUTO_DENIED_ALLOW_BUILDS_COMMENT = "# dyad-auto-denied";
 const PNPM_IGNORED_BUILDS_ERROR_CODE = "ERR_PNPM_IGNORED_BUILDS";
 const DYAD_ALLOW_BUILDS_METADATA_PATTERN =
   /^#\s*(dyad-default-allow-builds-(?:schema|data-version|channel))=(.+)$/;
-const DYAD_ALLOW_BUILDS_REMOTE_URL =
-  process.env.DYAD_DEFAULT_APPROVE_BUILDS_URL ??
-  "https://api.dyad.sh/v1/default-approve-builds.txt";
-const DYAD_ALLOW_BUILDS_FETCH_TIMEOUT_MS = 5_000;
 export const DYAD_ALLOW_BUILDS_CACHE_TTL_MS = 60 * 60 * 1000;
-const DYAD_ALLOW_BUILDS_MAX_BYTES = 256 * 1024;
 
 export interface CommandExecutionOptions {
   cwd?: string;
@@ -671,42 +666,11 @@ async function fetchRemoteAllowBuildsSource(
 }
 
 async function fetchRemoteAllowBuildsSourceFromNetwork(
-  fetcher: AllowBuildsTextFetcher,
+  _fetcher: AllowBuildsTextFetcher,
 ): Promise<AllowBuildsSource | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(),
-    DYAD_ALLOW_BUILDS_FETCH_TIMEOUT_MS,
-  );
-
-  try {
-    const response = await fetcher(DYAD_ALLOW_BUILDS_REMOTE_URL, {
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      return null;
-    }
-
-    const text = await response.text();
-    if (text.length > DYAD_ALLOW_BUILDS_MAX_BYTES) {
-      return null;
-    }
-
-    const source = parseDefaultAllowBuilds(text);
-    if (source.channel !== "remote") {
-      return null;
-    }
-    remoteAllowBuildsCache.set(fetcher, {
-      source,
-      expiresAtMs: Date.now() + DYAD_ALLOW_BUILDS_CACHE_TTL_MS,
-    });
-    return source;
-  } catch (error) {
-    logger.debug("Failed to fetch remote pnpm allowBuilds list:", error);
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
+  // 内网 / 离线版本：不再访问 api.dyad.sh 的 allowBuilds 列表，
+  // 始终使用打包内置的 default-approve-builds.txt。
+  return null;
 }
 
 async function resolveAllowBuildsSource({

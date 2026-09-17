@@ -12,6 +12,21 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useCustomLanguageModelProvider } from "@/hooks/useCustomLanguageModelProvider";
 import type { LanguageModelProvider } from "@/ipc/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  API_PROTOCOL_DESCRIPTIONS,
+  API_PROTOCOL_LABELS,
+  ApiProtocolSchema,
+  DEFAULT_API_PROTOCOL,
+  resolveApiProtocol,
+  type ApiProtocol,
+} from "@/ipc/shared/api_protocol";
 
 interface CreateCustomProviderDialogProps {
   isOpen: boolean;
@@ -30,6 +45,8 @@ export function CreateCustomProviderDialog({
   const [name, setName] = useState("");
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [envVarName, setEnvVarName] = useState("");
+  const [apiProtocol, setApiProtocol] =
+    useState<ApiProtocol>(DEFAULT_API_PROTOCOL);
   const [errorMessage, setErrorMessage] = useState("");
   const isEditMode = Boolean(editingProvider);
 
@@ -45,12 +62,14 @@ export function CreateCustomProviderDialog({
       setName(editingProvider.name || "");
       setApiBaseUrl(editingProvider.apiBaseUrl || "");
       setEnvVarName(editingProvider.envVarName || "");
+      setApiProtocol(resolveApiProtocol(editingProvider.apiProtocol));
     } else if (!isOpen) {
       // Reset form when dialog closes
       setId("");
       setName("");
       setApiBaseUrl("");
       setEnvVarName("");
+      setApiProtocol(DEFAULT_API_PROTOCOL);
       setErrorMessage("");
     }
   }, [editingProvider, isOpen]);
@@ -69,6 +88,7 @@ export function CreateCustomProviderDialog({
           name: name.trim(),
           apiBaseUrl: apiBaseUrl.trim(),
           envVarName: envVarName.trim() || undefined,
+          apiProtocol,
         });
       } else {
         await createProvider({
@@ -76,6 +96,7 @@ export function CreateCustomProviderDialog({
           name: name.trim(),
           apiBaseUrl: apiBaseUrl.trim(),
           envVarName: envVarName.trim() || undefined,
+          apiProtocol,
         });
       }
 
@@ -84,6 +105,7 @@ export function CreateCustomProviderDialog({
       setName("");
       setApiBaseUrl("");
       setEnvVarName("");
+      setApiProtocol(DEFAULT_API_PROTOCOL);
 
       onSuccess();
     } catch (error) {
@@ -160,6 +182,48 @@ export function CreateCustomProviderDialog({
             />
             <p className="text-xs text-muted-foreground">
               The base URL for the API endpoint.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="apiProtocol">API Protocol</Label>
+            <Select
+              value={apiProtocol}
+              onValueChange={(value) =>
+                value && setApiProtocol(value as ApiProtocol)
+              }
+              disabled={isLoading}
+            >
+              <SelectTrigger
+                id="apiProtocol"
+                aria-describedby="api-protocol-description"
+                className="w-full"
+              >
+                <SelectValue>
+                  {API_PROTOCOL_LABELS[apiProtocol]}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {ApiProtocolSchema.options.map((protocol) => (
+                  <SelectItem key={protocol} value={protocol}>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">
+                        {API_PROTOCOL_LABELS[protocol]}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {API_PROTOCOL_DESCRIPTIONS[protocol]}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p
+              id="api-protocol-description"
+              className="text-xs text-muted-foreground"
+            >
+              Requests use this protocol&apos;s official SDK request shape. Keep
+              OpenAI Chat Completions unless your endpoint requires otherwise.
             </p>
           </div>
 

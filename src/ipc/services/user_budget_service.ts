@@ -1,6 +1,5 @@
-import { Readable } from "node:stream";
-import fetch from "node-fetch";
 import { z } from "zod";
+import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
 
 export const UserInfoResponseSchema = z.object({
   usedCredits: z.number().finite().nonnegative(),
@@ -16,28 +15,19 @@ export class UserInfoApiError extends Error {
   }
 }
 
-/** Fresh main-process lookup, with no UI cache or test-build positive-balance bypass. */
+/**
+ * 内网 / 离线版本：不再访问 `https://api.dyad.sh/v1/user/info`。
+ *
+ * 调用方设计为容错：
+ * - `checkSubscriptionCredits` 在查询失败时 fail-open（放行），不影响本地模型；
+ * - `get-user-budget` 捕获异常后返回 null，UI 不会展示云端额度。
+ */
 export async function fetchUserInfo(
-  apiKey: string,
-  signal?: AbortSignal,
+  _apiKey: string,
+  _signal?: AbortSignal,
 ): Promise<UserInfoResponse> {
-  const timeout = AbortSignal.timeout(10_000);
-  const response = await fetch(
-    process.env.DYAD_USER_INFO_URL ?? "https://api.dyad.sh/v1/user/info",
-    {
-      method: "GET",
-      redirect: "error",
-      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "Cache-Control": "no-cache",
-      },
-    },
+  throw new DyadError(
+    "Account usage API is disabled in this offline build.",
+    DyadErrorKind.External,
   );
-  if (!response.ok) {
-    if (response.body instanceof Readable) response.body.destroy();
-    throw new UserInfoApiError(response.status);
-  }
-  return UserInfoResponseSchema.parse(await response.json());
 }

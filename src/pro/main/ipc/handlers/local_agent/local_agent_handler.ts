@@ -987,6 +987,7 @@ export async function handleLocalAgentStream(
       shouldNormalizeToolCallIdsForOpenAIResponses(
         runtimeModel.provider,
         runtimeModel.name,
+        modelClient.apiProtocol,
       )
         ? normalizeToolCallIdsForOpenAIResponses(messages)
         : messages;
