@@ -16,7 +16,13 @@ permissions:
   contents: read
 
 on:
+  # 手动触发：Actions → "Build offline Windows installer" → Run workflow
   workflow_dispatch:
+  # 本 workflow 自身变更时自动构建一次，便于验证构筑配置的改动。
+  # 其他源码推送不会触发，避免无谓消耗 CI。
+  push:
+    paths:
+      - ".github/workflows/build-offline-windows.yml"
 
 concurrency:
   group: build-offline-windows-${{ github.ref }}
