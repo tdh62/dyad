@@ -14,7 +14,6 @@ import {
   isSharedServerModule,
   supabaseFunctionEntryExists,
 } from "../../../../../../supabase_admin/supabase_utils";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import { getFileWriteKey, withLock } from "@/ipc/utils/lock_utils";
 
 const logger = log.scope("delete_file");
@@ -109,13 +108,6 @@ export const deleteFileTool: ToolDefinition<z.infer<typeof deleteFileSchema>> =
           }
         } else {
           logger.warn(`File to delete does not exist: ${fullFilePath}`);
-        }
-
-        if (didDelete) {
-          queueCloudSandboxSnapshotSync({
-            appId: ctx.appId,
-            deletedPaths: [operationPath],
-          });
         }
 
         return didDelete

@@ -6,7 +6,6 @@ import {
   createIpcSuccessEnvelope,
   type IpcContract,
 } from "../contracts/core";
-import { sendTelemetryException } from "../utils/telemetry";
 import { registerTrustedIpcHandler } from "./trusted_handle";
 import { queryInvalidationBus } from "@/window_infrastructure/main/query_invalidation_bus";
 
@@ -91,7 +90,6 @@ export function createTypedHandler<
       try {
         result = await runHandler(event, parsed.data);
       } catch (err) {
-        sendTelemetryException(err, { ipc_channel: contract.channel });
         return createIpcErrorEnvelope(err);
       }
 
@@ -191,7 +189,6 @@ export function createLoggedTypedHandler(logger: {
           return createIpcSuccessEnvelope(result);
         } catch (err) {
           logger.error(`[${contract.channel}] Handler error`, err);
-          sendTelemetryException(err, { ipc_channel: contract.channel });
           return createIpcErrorEnvelope(err);
         }
       },

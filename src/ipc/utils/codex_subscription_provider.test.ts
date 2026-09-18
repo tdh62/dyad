@@ -22,10 +22,7 @@ import {
   finishSubscriptionUsage,
   startSubscriptionUsage,
 } from "../services/codex_subscription_usage";
-import {
-  DyadErrorKind,
-  isDyadErrorKindFilteredFromTelemetry,
-} from "@/errors/dyad_error";
+import { DyadErrorKind } from "@/errors/dyad_error";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -164,9 +161,6 @@ describe("Codex subscription Responses adapter", () => {
             "ChatGPT subscription request failed (HTTP 400). Encrypted content could not be verified. (code: invalid_encrypted_content)",
         },
       );
-      expect(
-        isDyadErrorKindFilteredFromTelemetry(DyadErrorKind.Validation),
-      ).toBe(true);
     },
   );
 

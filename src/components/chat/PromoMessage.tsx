@@ -1,6 +1,5 @@
 import { useAtomValue } from "jotai";
 import { RefreshCw, Sparkles } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
 
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
@@ -195,7 +194,6 @@ export function usePromoMessage(chatId?: number): PromoMessageState {
  * composer drops its own top border and corners while this is visible.
  */
 export function PromoMessage({ seed }: { seed: number }) {
-  const posthog = usePostHog();
   const [isTrialDialogOpen, setIsTrialDialogOpen] = useState(false);
   const [devMessageIndex, setDevMessageIndex] = useState<number | null>(null);
 
@@ -210,7 +208,6 @@ export function PromoMessage({ seed }: { seed: number }) {
   const isProPromo = message.target.type === "trial-dialog";
 
   const handleCtaClick = () => {
-    posthog?.capture("promo_click", { messageId: message.id });
     if (message.target.type === "trial-dialog") {
       setIsTrialDialogOpen(true);
     } else {

@@ -801,14 +801,10 @@ export class ChatStreamRemoteManager {
       showWarning(warningMessage);
     }
     if (completion.extraFiles) {
-      const posthog = this.runtimeDeps?.getPosthog();
-      if (posthog) {
-        showExtraFilesToast({
-          files: completion.extraFiles,
-          error: completion.extraFilesError,
-          posthog,
-        });
-      }
+      showExtraFilesToast({
+        files: completion.extraFiles,
+        error: completion.extraFilesError,
+      });
     }
     if (this.runtimeDeps) {
       const completedInvocation = completion.invocationRef.operationId;

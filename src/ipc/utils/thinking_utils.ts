@@ -1,4 +1,3 @@
-import { PROVIDERS_THAT_SUPPORT_THINKING as GEMINI_PROVIDERS } from "../shared/language_model_constants";
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import type { ModelSelection } from "../../lib/schemas";
 
@@ -22,20 +21,6 @@ export function getExtraProviderOptionsForEngine(
   }
   if (providerId === "anthropic") {
     return getAnthropicEngineThinkingOptions(modelSelection);
-  }
-  if (GEMINI_PROVIDERS.includes(providerId)) {
-    const budgetTokens = getGeminiThinkingBudgetTokens(
-      getModelEffort(modelSelection),
-    );
-    return {
-      thinking: {
-        type: "enabled",
-        include_thoughts: true,
-        // -1 means dynamic thinking where model determines.
-        // budget_tokens: 128, // minimum for Gemini Pro is 128
-        budget_tokens: budgetTokens,
-      },
-    };
   }
   return {};
 }

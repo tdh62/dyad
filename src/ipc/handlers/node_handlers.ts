@@ -31,7 +31,6 @@ import {
   removeManagedNode,
   type NodeRuntimeSource,
 } from "@/ipc/utils/managed_node";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import { prependPathSegment, sanitizePathEnv } from "@/ipc/utils/managed_tools";
 import {
   applyManagedPnpmToProcessPath,
@@ -539,46 +538,25 @@ export function registerNodeHandlers() {
   });
 
   createTypedHandler(systemContracts.installManagedNode, async (event) => {
-    sendTelemetryEvent("managed_node_install", { status: "started" });
-    try {
-      const nodeVersion = await installManagedNode((progress) => {
-        safeSend(event.sender, "managed-node:install-progress", progress);
-      });
-      const settings = readSettings();
-      const customNode = await getCustomNodeInfo(settings.customNodePath);
-      writeSettings({
-        // Preserve a valid custom path; it remains the most explicit runtime
-        // selection. If there is no valid custom runtime, the install button
-        // switches Dyad to the newly installed managed runtime.
-        nodeRuntimePreference: customNode
-          ? (settings.nodeRuntimePreference ?? "system")
-          : "managed",
-        // A completed install supersedes any earlier cancel; let future
-        // previews auto-install again.
-        disablePreviewNodeAutoInstall: false,
-      });
-      await reloadNodePath();
-      managedPnpmImplicitInstallFailed = false;
-      sendTelemetryEvent("managed_node_install", {
-        status: "succeeded",
-        node_version: nodeVersion,
-      });
-      return { nodeVersion };
-    } catch (error) {
-      if (
-        error instanceof DyadError &&
-        error.kind === DyadErrorKind.UserCancelled
-      ) {
-        sendTelemetryEvent("managed_node_install", { status: "cancelled" });
-        throw error;
-      }
-      sendTelemetryEvent("managed_node_install", {
-        status: "failed",
-        failure_category:
-          error instanceof ManagedNodeInstallError ? error.category : "unknown",
-      });
-      throw error;
-    }
+    const nodeVersion = await installManagedNode((progress) => {
+      safeSend(event.sender, "managed-node:install-progress", progress);
+    });
+    const settings = readSettings();
+    const customNode = await getCustomNodeInfo(settings.customNodePath);
+    writeSettings({
+      // Preserve a valid custom path; it remains the most explicit runtime
+      // selection. If there is no valid custom runtime, the install button
+      // switches Dyad to the newly installed managed runtime.
+      nodeRuntimePreference: customNode
+        ? (settings.nodeRuntimePreference ?? "system")
+        : "managed",
+      // A completed install supersedes any earlier cancel; let future
+      // previews auto-install again.
+      disablePreviewNodeAutoInstall: false,
+    });
+    await reloadNodePath();
+    managedPnpmImplicitInstallFailed = false;
+    return { nodeVersion };
   });
 
   createTypedHandler(systemContracts.cancelManagedNodeInstall, async () => {

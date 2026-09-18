@@ -1,9 +1,4 @@
-import {
-  type UserSettings,
-  type VertexProviderSetting,
-  type AzureProviderSetting,
-} from "./schemas";
-import { PROVIDER_TO_ENV_VAR } from "../ipc/shared/language_model_constants";
+import { type UserSettings } from "./schemas";
 
 export interface ProviderCheckOptions {
   settings: UserSettings | null;
@@ -16,7 +11,9 @@ export interface ProviderCheckOptions {
 
 /**
  * Checks if a specific provider is set up with valid credentials.
- * Works with settings and optionally env vars.
+ *
+ * 内网 / 离线版本：只剩本地供应商（无需凭据，运行时自动发现）与用户自定义
+ * 供应商（可选用环境变量提供 key），因此这里不再有内置云端渠道的分支。
  */
 export function isProviderSetup(
   provider: string,
@@ -28,49 +25,12 @@ export function isProviderSetup(
     return false;
   }
 
-  const providerSettings = settings?.providerSettings[provider];
-
-  // Vertex uses service account credentials instead of an API key
-  if (provider === "vertex") {
-    const vertexSettings = providerSettings as VertexProviderSetting;
-    if (
-      vertexSettings?.serviceAccountKey?.value &&
-      vertexSettings?.projectId &&
-      vertexSettings?.location
-    ) {
-      return true;
-    }
-    return false;
-  }
-
-  // Azure needs apiKey + resourceName
-  if (provider === "azure") {
-    const azureSettings = providerSettings as AzureProviderSetting;
-    const hasSavedSettings = Boolean(
-      (azureSettings?.apiKey?.value ?? "").trim() &&
-      (azureSettings?.resourceName ?? "").trim(),
-    );
-    if (hasSavedSettings) {
-      return true;
-    }
-    if (envVars["AZURE_API_KEY"] && envVars["AZURE_RESOURCE_NAME"]) {
-      return true;
-    }
-    return false;
-  }
-
   // Check API key in settings
-  if (providerSettings?.apiKey?.value) {
+  if (settings?.providerSettings[provider]?.apiKey?.value) {
     return true;
   }
 
-  // Check env var - first try the static mapping, then provider data
-  const staticEnvVar = PROVIDER_TO_ENV_VAR[provider];
-  if (staticEnvVar && envVars[staticEnvVar]) {
-    return true;
-  }
-
-  // Check provider data for env var name (for custom providers)
+  // Check provider data for env var name (custom providers)
   const providerInfo = providerData?.find((p) => p.id === provider);
   if (providerInfo?.envVarName && envVars[providerInfo.envVarName]) {
     return true;
@@ -80,8 +40,7 @@ export function isProviderSetup(
 }
 
 /**
- * Checks whether any non-Google provider is set up.
- * Used for determining if basic agent mode should be available.
+ * Checks whether any provider is set up with credentials.
  */
 export function isNonGoogleProviderSetup(
   settings: UserSettings,
@@ -90,23 +49,11 @@ export function isNonGoogleProviderSetup(
   if (!settings) return false;
 
   const options: ProviderCheckOptions = { settings, envVars };
-  // Google/Gemini API keys are often free-tier keys with low rate limits, which
-  // makes users likely to hit errors in agent mode. Vertex is still eligible.
-  const excludedProviders = new Set(["auto", "google"]);
   const configuredProviders = new Set([
     ...Object.keys(settings.providerSettings ?? {}),
-    ...Object.keys(PROVIDER_TO_ENV_VAR),
   ]);
 
-  return [...configuredProviders].some(
-    (provider) =>
-      !excludedProviders.has(provider) && isProviderSetup(provider, options),
+  return [...configuredProviders].some((provider) =>
+    isProviderSetup(provider, options),
   );
-}
-
-export function isGoogleProviderSetup(
-  settings: UserSettings,
-  envVars: Record<string, string | undefined>,
-): boolean {
-  return isProviderSetup("google", { settings, envVars });
 }

@@ -8,7 +8,6 @@ import { ExecuteAddDependencyError } from "./executeAddDependency";
 
 const mocks = vi.hoisted(() => ({
   executeAddDependencyMock: vi.fn(),
-  queueCloudSandboxSnapshotSyncMock: vi.fn(),
   readSettingsMock: vi.fn(),
   executeSupabaseSqlMock: vi.fn(),
   writeMigrationFileMock: vi.fn(),
@@ -17,7 +16,6 @@ const mocks = vi.hoisted(() => ({
 
 const {
   executeAddDependencyMock,
-  queueCloudSandboxSnapshotSyncMock,
   readSettingsMock,
   executeSupabaseSqlMock,
   writeMigrationFileMock,
@@ -79,10 +77,6 @@ vi.mock("../utils/git_utils", () => ({
 
 vi.mock("@/main/settings", () => ({
   readSettings: mocks.readSettingsMock,
-}));
-
-vi.mock("../utils/cloud_sandbox_provider", () => ({
-  queueCloudSandboxSnapshotSync: mocks.queueCloudSandboxSnapshotSyncMock,
 }));
 
 vi.mock("../../supabase_admin/supabase_management_client", () => ({
@@ -376,11 +370,6 @@ describe("processFullResponseActions add dependency errors", () => {
     expect(result).toMatchObject({
       updatedFiles: true,
     });
-    expect(queueCloudSandboxSnapshotSyncMock).toHaveBeenCalledWith({
-      appId: 1,
-      changedPaths: ["src/file1.js"],
-      deletedPaths: ["src/missing.js"],
-    });
   });
 
   it("queues the canonical physical delete path through an in-project alias", async () => {
@@ -405,11 +394,6 @@ describe("processFullResponseActions add dependency errors", () => {
     );
 
     expect(result).toMatchObject({ updatedFiles: true });
-    expect(queueCloudSandboxSnapshotSyncMock).toHaveBeenCalledWith({
-      appId: 1,
-      changedPaths: ["src/file1.js"],
-      deletedPaths: ["src/missing.js"],
-    });
   });
 
   it("delegates shared-affected and skipped direct Supabase functions to the shared deploy helper", async () => {

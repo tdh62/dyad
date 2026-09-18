@@ -5,19 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renameFileTool } from "./rename_file";
 import { writeFileTool } from "./write_file";
 
-const {
-  deleteSupabaseFunction,
-  deploySupabaseFunction,
-  gitAdd,
-  gitRemove,
-  queueCloudSandboxSnapshotSync,
-} = vi.hoisted(() => ({
-  deleteSupabaseFunction: vi.fn(),
-  deploySupabaseFunction: vi.fn(),
-  gitAdd: vi.fn(),
-  gitRemove: vi.fn(),
-  queueCloudSandboxSnapshotSync: vi.fn(),
-}));
+const { deleteSupabaseFunction, deploySupabaseFunction, gitAdd, gitRemove } =
+  vi.hoisted(() => ({
+    deleteSupabaseFunction: vi.fn(),
+    deploySupabaseFunction: vi.fn(),
+    gitAdd: vi.fn(),
+    gitRemove: vi.fn(),
+  }));
 
 vi.mock("electron-log", () => ({
   default: {
@@ -30,9 +24,6 @@ vi.mock("electron-log", () => ({
 }));
 
 vi.mock("@/ipc/utils/git_utils", () => ({ gitAdd, gitRemove }));
-vi.mock("@/ipc/utils/cloud_sandbox_provider", () => ({
-  queueCloudSandboxSnapshotSync,
-}));
 vi.mock("../../../../../../supabase_admin/supabase_management_client", () => ({
   deleteSupabaseFunction,
   deploySupabaseFunction,
@@ -90,10 +81,6 @@ describe.runIf(process.platform !== "win32")(
       expect(ctx.sharedServerModulePaths).toEqual([
         "supabase/functions/_shared/util.ts",
       ]);
-      expect(queueCloudSandboxSnapshotSync).toHaveBeenCalledWith({
-        appId: 123456,
-        changedPaths: ["supabase/functions/_shared/util.ts"],
-      });
     });
 
     it("renames through an alias using canonical git, cloud, and Supabase paths", async () => {
@@ -115,11 +102,6 @@ describe.runIf(process.platform !== "win32")(
       expect(gitRemove).toHaveBeenCalledWith({
         path: appPath,
         filepath: "source.ts",
-      });
-      expect(queueCloudSandboxSnapshotSync).toHaveBeenCalledWith({
-        appId: 123456,
-        changedPaths: ["supabase/functions/hello-world/index.ts"],
-        deletedPaths: ["source.ts"],
       });
       expect(deploySupabaseFunction).toHaveBeenCalledWith({
         supabaseProjectId: "project-id",

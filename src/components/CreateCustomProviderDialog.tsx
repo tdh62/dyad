@@ -199,9 +199,7 @@ export function CreateCustomProviderDialog({
                 aria-describedby="api-protocol-description"
                 className="w-full"
               >
-                <SelectValue>
-                  {API_PROTOCOL_LABELS[apiProtocol]}
-                </SelectValue>
+                <SelectValue>{API_PROTOCOL_LABELS[apiProtocol]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ApiProtocolSchema.options.map((protocol) => (

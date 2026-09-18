@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useStore } from "jotai";
-import { usePostHog } from "posthog-js/react";
 import { usePackageManagerWarningStore } from "@/package_manager_warnings/PackageManagerWarningProvider";
 import type { ChatStreamRuntimeDeps } from "@/chat_stream/runtime_deps";
 import {
@@ -110,9 +109,9 @@ export function useChatStreamHasPreview(chatId: number | null): boolean {
 /**
  * Root-level runtime wiring for the chat stream machine. Mount exactly once
  * (app layout / test harness). Registers the environment (Jotai store, React
- * Query client, settings, PostHog) that the production command adapter needs
- * to execute stream side effects — including background queue dispatch for
- * chats whose page is not open.
+ * Query client, settings) that the production command adapter needs to execute
+ * stream side effects — including background queue dispatch for chats whose
+ * page is not open.
  */
 export function useChatStreamRuntime(
   facades: Pick<
@@ -124,20 +123,16 @@ export function useChatStreamRuntime(
   const store = useStore();
   const queryClient = useQueryClient();
   const { settings } = useSettings();
-  const posthog = usePostHog();
   const packageWarnings = usePackageManagerWarningStore();
 
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const posthogRef = useRef(posthog);
-  posthogRef.current = posthog;
 
   const register = useCallback(() => {
     manager.registerRuntimeDeps({
       store,
       queryClient,
       getSettings: () => settingsRef.current,
-      getPosthog: () => posthogRef.current ?? null,
       requestPreviewReload: facades.requestPreviewReload,
       requestCapture: facades.requestCapture,
       setPackageManagerWarning:

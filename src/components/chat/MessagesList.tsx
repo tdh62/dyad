@@ -10,7 +10,7 @@ import {
 } from "react";
 import { Virtuoso } from "react-virtuoso";
 import ChatMessage from "./ChatMessage";
-import { OpenRouterSetupBanner, SetupBanner } from "../SetupBanner";
+import { SetupBanner } from "../SetupBanner";
 
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useDisplayedChatMessages } from "@/hooks/useChatStream";
@@ -628,26 +628,11 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
 
     // Stabilize renderSetupBanner with proper dependencies
     const renderSetupBanner = useCallback(() => {
-      const selectedModel =
-        selectedChat?.modelSelection ?? settings?.selectedModel;
-      if (
-        selectedModel?.name === "free" &&
-        selectedModel?.provider === "auto" &&
-        !isProviderSetup("openrouter")
-      ) {
-        return <OpenRouterSetupBanner className="w-full" />;
-      }
       if (!isAnyProviderSetup()) {
         return <SetupBanner />;
       }
       return null;
-    }, [
-      settings?.selectedModel?.name,
-      settings?.selectedModel?.provider,
-      selectedChat?.modelSelection,
-      isProviderSetup,
-      isAnyProviderSetup,
-    ]);
+    }, [isAnyProviderSetup]);
 
     // Precompute which indices are cancelled prompts so the callback
     // can depend on this set instead of the full messages array reference.

@@ -116,7 +116,6 @@ import {
   FileEditTracker,
   type Todo,
 } from "./tools/types";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import {
   prepareStepMessages,
   injectMessagesAtPositions,
@@ -1978,29 +1977,12 @@ export async function handleLocalAgentStream(
               needsContinuationInstruction = true;
               const retryDelayMs =
                 STREAM_RETRY_BASE_DELAY_MS * terminatedRetryCount;
-              sendTelemetryEvent("local_agent:terminated_stream_retry", {
-                chatId: req.chatId,
-                dyadRequestId,
-                retryCount: terminatedRetryCount,
-                error: String(streamError),
-                phase: "stream_iteration",
-              });
               logger.warn(
                 `Transient stream termination for chat ${req.chatId}; retrying pass (${terminatedRetryCount}/${MAX_TERMINATED_STREAM_RETRIES}) after ${retryDelayMs}ms`,
               );
               await delay(retryDelayMs);
               continue;
             }
-            sendTelemetryEvent(
-              "local_agent:terminated_stream_retries_exhausted",
-              {
-                chatId: req.chatId,
-                dyadRequestId,
-                retryCount: terminatedRetryCount,
-                error: String(streamError),
-                phase: "stream_iteration",
-              },
-            );
             throw streamError;
           }
 
@@ -2028,30 +2010,11 @@ export async function handleLocalAgentStream(
               needsContinuationInstruction = true;
               const retryDelayMs =
                 STREAM_RETRY_BASE_DELAY_MS * terminatedRetryCount;
-              sendTelemetryEvent("local_agent:terminated_stream_retry", {
-                chatId: req.chatId,
-                dyadRequestId,
-                retryCount: terminatedRetryCount,
-                error: String(err),
-                phase: "response_finalization",
-              });
               logger.warn(
                 `Transient stream termination while finalizing response for chat ${req.chatId}; retrying pass (${terminatedRetryCount}/${MAX_TERMINATED_STREAM_RETRIES}) after ${retryDelayMs}ms`,
               );
               await delay(retryDelayMs);
               continue;
-            }
-            if (isTerminatedStreamError(err)) {
-              sendTelemetryEvent(
-                "local_agent:terminated_stream_retries_exhausted",
-                {
-                  chatId: req.chatId,
-                  dyadRequestId,
-                  retryCount: terminatedRetryCount,
-                  error: String(err),
-                  phase: "response_finalization",
-                },
-              );
             }
             logger.warn("Failed to retrieve stream response messages:", err);
             steps = [];
@@ -2217,11 +2180,6 @@ export async function handleLocalAgentStream(
       );
       if (unsuccessful.length > 0) {
         const failureReport = buildImplementerFailureReport(unsuccessful);
-        if (failureReport.telemetryProperties) {
-          sendTelemetryEvent("local_agent:implementer_failed", {
-            ...failureReport.telemetryProperties,
-          });
-        }
         throw new DyadError(
           failureReport.displayMessage,
           DyadErrorKind.Precondition,
@@ -2329,10 +2287,6 @@ export async function handleLocalAgentStream(
       fullResponse += warningMessage;
       await updateResponseInDb(placeholderMessageId, fullResponse);
       sendChunk(fullResponse);
-      sendTelemetryEvent("sandbox.tool.unused_with_attachment", {
-        chatId: req.chatId,
-        appId: ctx.appId,
-      });
     }
 
     // Save the AI SDK messages for multi-turn tool call preservation
@@ -2385,17 +2339,6 @@ export async function handleLocalAgentStream(
     // The turn's messages have settled; index them for chat search so they
     // are normally searchable by the next turn.
     scheduleChatSearchIndexing();
-
-    // Send telemetry for files with multiple edit tool types
-    for (const [filePath, counts] of Object.entries(fileEditTracker)) {
-      const toolsUsed = Object.entries(counts).filter(([, count]) => count > 0);
-      if (toolsUsed.length >= 2) {
-        sendTelemetryEvent("local_agent:file_edit_retry", {
-          filePath,
-          ...counts,
-        });
-      }
-    }
 
     const workspaceChanged =
       (ctx.mutationCount ?? 0) > 0 || ctx.workspaceMutated === true;

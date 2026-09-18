@@ -10,8 +10,6 @@ import {
 import { useSettings } from "@/hooks/useSettings";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
-import { usePostHog } from "posthog-js/react";
-import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { INSPIRATION_PROMPTS } from "@/prompts/inspiration_prompts";
 
 import { ImportAppButton } from "@/components/ImportAppButton";
@@ -60,8 +58,6 @@ export default function HomePage() {
 
     return getHomeDefaultChatMode(settings, envVars);
   }, [envVars, settings]);
-
-  const posthog = usePostHog();
 
   // Get the appId from search params
   const appId = search.appId ? Number(search.appId) : null;
@@ -205,7 +201,6 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    posthog.capture("home:setup-pill:click");
                     sendFirstPrompt({
                       type: "ARM_FOR_SETUP",
                       payload: {
@@ -257,7 +252,6 @@ export default function HomePage() {
             </button>
           </div>
         </div>
-        <PrivacyBanner />
       </div>
       <FeaturedAppShowcase />
     </div>

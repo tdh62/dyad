@@ -38,7 +38,6 @@ import { IS_TEST_BUILD } from "../utils/test_utils";
 import { safeSend } from "../utils/safe_sender";
 import { SupabaseManagementAPIError } from "@dyad-sh/supabase-management-js";
 import { isRateLimitError } from "../utils/retryWithRateLimit";
-import { isGenericFetchFailedError } from "@/lib/posthogTelemetry";
 import { queryInvalidationBus } from "@/window_infrastructure/main/query_invalidation_bus";
 
 const logger = log.scope("supabase_handlers");
@@ -116,15 +115,6 @@ function classifyCreateProjectError(error: unknown): unknown {
       `Couldn't create the Supabase project: ${error.message}`,
       DyadErrorKind.External,
     );
-  }
-  // A bare network failure is passed through untouched, because that is how it
-  // is recognised: the telemetry filter matches on the name and message, so
-  // wrapping it would report every create attempted offline as an exception.
-  if (
-    error instanceof Error &&
-    isGenericFetchFailedError(error.name, error.message)
-  ) {
-    return error;
   }
   return new DyadError(
     `Couldn't create the Supabase project: ${error instanceof Error ? error.message : error}`,

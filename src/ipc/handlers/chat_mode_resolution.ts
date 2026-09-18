@@ -11,8 +11,8 @@ import {
 } from "@/lib/freeProModel";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
 import { readSettings } from "@/main/settings";
-import { PROVIDER_TO_ENV_VAR } from "@/ipc/shared/language_model_constants";
 import { getEnvVar } from "@/ipc/utils/read_env";
+import { LOCAL_PROVIDERS } from "@/ipc/shared/language_model_constants";
 
 export { normalizeStoredChatMode };
 
@@ -62,12 +62,8 @@ export async function getInitialChatModeForNewChat(
 }
 
 function getChatModeEnvVars(): Record<string, string | undefined> {
-  const envVarNames = new Set([
-    ...Object.values(PROVIDER_TO_ENV_VAR),
-    "AZURE_RESOURCE_NAME",
-  ]);
-
-  return Object.fromEntries(
-    [...envVarNames].map((envVarName) => [envVarName, getEnvVar(envVarName)]),
-  );
+  // 本版本没有内置云端渠道，也就没有对应的 provider 环境变量可探测；
+  // 本地供应商由运行时发现，不需要凭据。
+  void LOCAL_PROVIDERS;
+  return {};
 }

@@ -2,13 +2,6 @@ import { StrictMode, useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { router } from "./router";
 import { RouterProvider } from "@tanstack/react-router";
-import { PostHogProvider } from "posthog-js/react";
-import posthog from "posthog-js";
-import {
-  getTelemetryUserId,
-  isTelemetryOptedIn,
-  isDyadProUser,
-} from "./hooks/useSettings";
 
 // Initialize i18next before any rendering
 import "./i18n";
@@ -23,14 +16,6 @@ import { showError } from "./lib/toast";
 import { ipc } from "./ipc/types";
 import { useStore } from "jotai";
 import { queryKeys } from "./lib/queryKeys";
-import {
-  createExceptionFromTelemetry,
-  getExceptionTelemetryContext,
-  getPostHogTelemetryStorage,
-  PostHogErrorDeduper,
-  shouldBypassNonProTelemetrySampling,
-  shouldFilterPostHogExceptionEvent,
-} from "./lib/posthogTelemetry";
 import { registerRendererIpcListeners } from "./app_wiring/registerRendererIpcListeners";
 import {
   ChatStreamProvider,
@@ -53,10 +38,7 @@ import {
 } from "./window_infrastructure/chat_tab_session_storage";
 import type { VisibleEntity } from "./window_infrastructure/types";
 import { initialWindowNavigation } from "./window_infrastructure/initial_window_navigation";
-import {
-  earlyTelemetryEvents,
-  registerEarlyRendererEvents,
-} from "./app_wiring/early_renderer_events";
+import { registerEarlyRendererEvents } from "./app_wiring/early_renderer_events";
 import { clearRecorderForAppAtom } from "./atoms/recorderAtoms";
 
 // @ts-ignore
@@ -100,79 +82,6 @@ const queryClient = new QueryClient({
   }),
 });
 
-const postHogErrorDeduper = new PostHogErrorDeduper(
-  getPostHogTelemetryStorage(window),
-);
-window.addEventListener("pagehide", () => postHogErrorDeduper.flush());
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") {
-    postHogErrorDeduper.flush();
-  }
-});
-
-const posthogClient = posthog.init(
-  "phc_5Vxx0XT8Ug3eWROhP6mm4D6D2DgIIKT232q4AKxC2ab",
-  {
-    api_host: "https://us.i.posthog.com",
-    // @ts-ignore
-    debug: import.meta.env.MODE === "development",
-    autocapture: false,
-    capture_exceptions: true,
-    capture_pageview: false,
-    before_send: (event) => {
-      if (!isTelemetryOptedIn()) {
-        console.debug("Telemetry not opted in, skipping event");
-        return null;
-      }
-
-      if (shouldFilterPostHogExceptionEvent(event)) {
-        console.debug(
-          "Filtering generic fetch failed exception from telemetry",
-        );
-        return null;
-      }
-      const telemetryUserId = getTelemetryUserId();
-      if (telemetryUserId) {
-        posthogClient.identify(telemetryUserId);
-      }
-
-      if (event?.properties["$ip"]) {
-        event.properties["$ip"] = null;
-      }
-
-      const isPro = isDyadProUser();
-      const dedupedEvent = postHogErrorDeduper.process(event, isPro);
-      if (!dedupedEvent) {
-        console.debug("Deduplicating PostHog error event", event?.event);
-        return null;
-      }
-      event = dedupedEvent;
-
-      // For non-Pro users, only send 10% of events (but always send errors,
-      // app:initial-load, promo_click, and sandbox.script.* — see
-      // shouldBypassNonProTelemetrySampling).
-      if (!isPro) {
-        if (
-          !shouldBypassNonProTelemetrySampling(event) &&
-          Math.random() > 0.1
-        ) {
-          console.debug("Non-Pro user: sampling out event", event?.event);
-          return null;
-        }
-      }
-
-      console.debug(
-        "Telemetry opted in - UUID:",
-        telemetryUserId,
-        "sending event",
-        event,
-      );
-      return event;
-    },
-    persistence: "localStorage",
-  },
-);
-
 function App() {
   return (
     <ChatStreamProvider>
@@ -213,43 +122,6 @@ function RendererServices() {
       queryFn: () => ipc.system.getUserBudget(),
     });
   }, [queryClient]);
-
-  useEffect(() => {
-    // Subscribe to navigation state changes
-    const unsubscribe = router.subscribe("onResolved", (navigation) => {
-      // Capture the navigation event in PostHog
-      posthog.capture("navigation", {
-        toPath: navigation.toLocation.pathname,
-        fromPath: navigation.fromLocation?.pathname,
-      });
-
-      // Optionally capture as a standard pageview as well
-      posthog.capture("$pageview", {
-        path: navigation.toLocation.pathname,
-      });
-    });
-
-    // Clean up subscription when component unmounts
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  useEffect(
-    () =>
-      earlyTelemetryEvents.subscribe(({ eventName, properties }) => {
-        if (eventName === "$exception") {
-          posthog.captureException(
-            createExceptionFromTelemetry(properties),
-            getExceptionTelemetryContext(properties),
-          );
-          return;
-        }
-
-        posthog.capture(eventName, properties);
-      }),
-    [],
-  );
 
   useEffect(() => {
     let disposed = false;
@@ -333,11 +205,9 @@ function RendererServices() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <PostHogProvider client={posthogClient}>
-        <EntityDisposalProvider>
-          <App />
-        </EntityDisposalProvider>
-      </PostHogProvider>
+      <EntityDisposalProvider>
+        <App />
+      </EntityDisposalProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

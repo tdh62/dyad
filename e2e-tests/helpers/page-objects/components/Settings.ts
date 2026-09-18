@@ -24,12 +24,6 @@ export class Settings {
       .click();
   }
 
-  async toggleCloudSandboxExperiment() {
-    await this.page
-      .getByRole("switch", { name: "Enable Cloud Sandbox" })
-      .click();
-  }
-
   async disableAppBlueprint() {
     await this.page.evaluate(async () => {
       await (window as any).electron.ipcRenderer.invoke("set-user-settings", {
@@ -57,16 +51,11 @@ export class Settings {
     }
   }
 
-  async changeRuntimeMode(mode: "host" | "docker" | "cloud") {
+  async changeRuntimeMode(mode: "host" | "docker") {
     await this.page.getByRole("combobox", { name: "Runtime Mode" }).click();
     await this.page
       .getByRole("option", {
-        name:
-          mode === "host"
-            ? "Local (default)"
-            : mode === "docker"
-              ? "Docker (experimental)"
-              : "Cloud Sandbox (Pro)",
+        name: mode === "host" ? "Local (default)" : "Docker (experimental)",
       })
       .click();
   }

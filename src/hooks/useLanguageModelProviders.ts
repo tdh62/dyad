@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ipc, type LanguageModelProvider } from "@/ipc/types";
 import { useSettings } from "./useSettings";
-import { cloudProviders, isDyadProEnabled } from "@/lib/schemas";
+import { isDyadProEnabled } from "@/lib/schemas";
 import { queryKeys } from "@/lib/queryKeys";
 import { isProviderSetup as isProviderSetupUtil } from "@/lib/providerUtils";
 import { useSubscriptionAccount } from "./useSubscriptionAccount";
@@ -54,11 +54,6 @@ export function useLanguageModelProviders() {
       localProviders.has(settings.selectedModel.provider) &&
       settings.selectedModel.name.trim()
     ) {
-      return true;
-    }
-
-    // Check hardcoded cloud providers
-    if (cloudProviders.some((provider) => isProviderSetup(provider))) {
       return true;
     }
 

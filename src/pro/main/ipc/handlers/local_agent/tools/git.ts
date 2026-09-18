@@ -5,7 +5,6 @@ import {
   isServerFunction,
   isSharedServerModule,
 } from "@/supabase_admin/supabase_utils";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import {
   getAgentGitCommit,
   getAgentGitDiff,
@@ -484,10 +483,6 @@ export const gitRestoreFileTool: ToolDefinition<
       ctx.sharedServerModulePaths.push(operationPath);
       ctx.onSharedServerModuleChange?.(operationPath);
     }
-    queueCloudSandboxSnapshotSync({
-      appId: ctx.appId,
-      changedPaths: [operationPath],
-    });
 
     if (ctx.supabaseProjectId && isServerFunction(operationPath)) {
       let functionName: string;

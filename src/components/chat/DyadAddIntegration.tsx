@@ -23,8 +23,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DyadCard, DyadCardHeader, DyadBadge } from "./DyadCardPrimitives";
 import { getCompletedIntegrationProvider } from "./dyadAddIntegrationUtils";
 import { ipc } from "@/ipc/types";
-import { usePostHog } from "posthog-js/react";
-import { captureIntegrationSetupStart } from "@/lib/integrationSetupTelemetry";
 
 interface DyadAddIntegrationProps {
   children: React.ReactNode;
@@ -38,7 +36,6 @@ export const DyadAddIntegration: React.FC<DyadAddIntegrationProps> = ({
   outcome,
 }) => {
   const { t } = useTranslation("home");
-  const posthog = usePostHog();
   const appId = useAtomValue(selectedAppIdAtom);
   const chatId = useAtomValue(selectedChatIdAtom);
   const pendingIntegrationMap = usePendingIntegrations();
@@ -187,10 +184,6 @@ export const DyadAddIntegration: React.FC<DyadAddIntegrationProps> = ({
       isAppLoading
     )
       return;
-    captureIntegrationSetupStart(posthog, {
-      provider: effectiveSelectedProvider,
-      requestId: pendingIntegration.requestId,
-    });
     // Share the UI choice with the Configure panel without mutating the
     // main-authoritative request read model.
     setIntegrationProviderSelection((prev) => {

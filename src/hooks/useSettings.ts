@@ -1,36 +1,10 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ipc } from "@/ipc/types";
-import { type UserSettings, hasDyadProKey } from "@/lib/schemas";
-import {
-  getInitialLoadTelemetryProperties,
-  getSettingsPersonTelemetryProperties,
-} from "@/lib/posthogTelemetry";
-import { usePostHog } from "posthog-js/react";
-import { useAppVersion } from "./useAppVersion";
+import { type UserSettings } from "@/lib/schemas";
 import { queryKeys } from "@/lib/queryKeys";
 
-const TELEMETRY_CONSENT_KEY = "dyadTelemetryConsent";
-const TELEMETRY_USER_ID_KEY = "dyadTelemetryUserId";
-const DYAD_PRO_STATUS_KEY = "dyadProStatus";
-
-export function isTelemetryOptedIn() {
-  return window.localStorage.getItem(TELEMETRY_CONSENT_KEY) === "opted_in";
-}
-
-export function getTelemetryUserId(): string | null {
-  return window.localStorage.getItem(TELEMETRY_USER_ID_KEY);
-}
-
-export function isDyadProUser(): boolean {
-  return window.localStorage.getItem(DYAD_PRO_STATUS_KEY) === "true";
-}
-
-let initialLoadTelemetryState: "idle" | "sent" = "idle";
-
 export function useSettings() {
-  const posthog = usePostHog();
-  const appVersion = useAppVersion();
   const queryClient = useQueryClient();
 
   const settingsQuery = useQuery({
@@ -43,86 +17,12 @@ export function useSettings() {
     queryFn: () => ipc.misc.getEnvVars(),
   });
 
-  const {
-    data: platform,
-    error: platformError,
-    isLoading: isPlatformLoading,
-  } = useQuery({
-    queryKey: queryKeys.system.platform,
-    queryFn: () => ipc.system.getSystemPlatform(),
-    staleTime: Infinity,
-  });
-
-  const {
-    data: initialLoadTelemetryContext,
-    isLoading: isInitialLoadTelemetryContextLoading,
-  } = useQuery({
-    queryKey: queryKeys.system.initialLoadTelemetryContext,
-    queryFn: () => ipc.system.getInitialLoadTelemetryContext(),
-    staleTime: Infinity,
-  });
-
-  useEffect(() => {
-    if (!settingsQuery.data) {
-      return;
-    }
-
-    processSettingsForTelemetry(settingsQuery.data);
-    posthog?.people?.set(
-      getSettingsPersonTelemetryProperties(settingsQuery.data),
-    );
-
-    if (
-      initialLoadTelemetryState !== "idle" ||
-      !appVersion ||
-      !posthog ||
-      isPlatformLoading ||
-      isInitialLoadTelemetryContextLoading ||
-      !initialLoadTelemetryContext
-    ) {
-      return;
-    }
-
-    if (platformError) {
-      console.warn(
-        "Failed to get system platform for telemetry",
-        platformError,
-      );
-    }
-
-    posthog.capture(
-      "app:initial-load",
-      getInitialLoadTelemetryProperties({
-        settings: settingsQuery.data,
-        appVersion,
-        platform: platform ?? null,
-        isFirstSession: initialLoadTelemetryContext.isFirstSession,
-        previousSessionAppSize:
-          initialLoadTelemetryContext.previousSessionAppSize,
-      }),
-    );
-    initialLoadTelemetryState = "sent";
-  }, [
-    settingsQuery.data,
-    appVersion,
-    posthog,
-    isPlatformLoading,
-    isInitialLoadTelemetryContextLoading,
-    platform,
-    platformError,
-    initialLoadTelemetryContext,
-  ]);
-
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<UserSettings>) => {
       return ipc.settings.setUserSettings(newSettings);
     },
     onSuccess: (updatedSettings) => {
       queryClient.setQueryData(queryKeys.settings.user, updatedSettings);
-      processSettingsForTelemetry(updatedSettings);
-      posthog?.people?.set(
-        getSettingsPersonTelemetryProperties(updatedSettings),
-      );
     },
     meta: { showErrorToast: true },
   });
@@ -156,27 +56,4 @@ export function useSettings() {
     updateSettings,
     refreshSettings,
   };
-}
-
-function processSettingsForTelemetry(settings: UserSettings) {
-  if (settings.telemetryConsent) {
-    window.localStorage.setItem(
-      TELEMETRY_CONSENT_KEY,
-      settings.telemetryConsent,
-    );
-  } else {
-    window.localStorage.removeItem(TELEMETRY_CONSENT_KEY);
-  }
-  if (settings.telemetryUserId) {
-    window.localStorage.setItem(
-      TELEMETRY_USER_ID_KEY,
-      settings.telemetryUserId,
-    );
-  } else {
-    window.localStorage.removeItem(TELEMETRY_USER_ID_KEY);
-  }
-  window.localStorage.setItem(
-    DYAD_PRO_STATUS_KEY,
-    hasDyadProKey(settings) ? "true" : "false",
-  );
 }

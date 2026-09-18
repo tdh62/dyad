@@ -86,9 +86,7 @@ async function getSystemDebugInfo({
     console.error("Failed to read package.json:", err);
   }
 
-  // Get telemetry info from settings
   const settings = readSettings();
-  const telemetryId = settings.telemetryUserId || "unknown";
 
   // Get logs from electron-log
   let logs = "";
@@ -127,11 +125,8 @@ async function getSystemDebugInfo({
     nodeVersion,
     pnpmVersion,
     nodePath,
-    telemetryId,
     selectedLanguageModel:
       serializeModelForDebug(settings.selectedModel) || "unknown",
-    telemetryConsent: settings.telemetryConsent || "unknown",
-    telemetryUrl: "https://us.i.posthog.com", // Hardcoded from renderer.tsx
     dyadVersion,
     platform: process.platform,
     architecture: arch(),
@@ -398,10 +393,6 @@ export function registerDebugHandlers() {
           pnpmVersion,
           nodePath: nodePathResult,
           electronVersion: process.versions.electron ?? "unknown",
-          telemetryId:
-            settings.telemetryConsent === "opted_out"
-              ? null
-              : settings.telemetryUserId || "unknown",
         },
 
         settings: sanitizeSettingsForDebug(

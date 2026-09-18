@@ -13,17 +13,14 @@ import {
   type ThemeGenerationModelOption,
 } from "@/ipc/types/templates";
 import {
-  CLOUD_PROVIDERS,
   GEMINI_3_5_FLASH,
   GEMINI_3_1_PRO_PREVIEW,
   GPT_5_2_MODEL_NAME,
   GPT_5_5_MODEL_NAME,
   GPT_5_NANO,
-  MODEL_OPTIONS,
   NEMOTRON_3_SUPER_FREE,
   OPUS_4_6,
   OPUS_4_8,
-  PROVIDER_TO_ENV_VAR,
 } from "./language_model_constants";
 
 const logger = log.scope("remote_language_model_catalog");
@@ -151,41 +148,12 @@ const DEFAULT_THEME_GENERATION_OPTIONS: ThemeGenerationModelOption[] = [
 ];
 
 function buildFallbackCatalog(): BuiltinLanguageModelCatalog {
-  // 内网 / 离线版本：内置目录同样不包含 Dyad 云端模型供应商。
-  const providers: LanguageModelProvider[] = Object.entries(CLOUD_PROVIDERS)
-    .filter(([providerId]) => providerId !== FREE_PRO_MODEL_PROVIDER)
-    .map(([providerId, provider]) => ({
-      id: providerId,
-      name: provider.displayName,
-      hasFreeTier: provider.hasFreeTier,
-      websiteUrl: provider.websiteUrl,
-      gatewayPrefix: provider.gatewayPrefix,
-      secondary: provider.secondary,
-      envVarName:
-        PROVIDER_TO_ENV_VAR[providerId as keyof typeof PROVIDER_TO_ENV_VAR] ??
-        undefined,
-      type: "cloud",
-    }));
-
+  // 内网 / 离线版本：内置云端渠道已移除，因此内置目录不再包含任何云端
+  // 供应商与云端模型。下面的别名仅用于让仍依赖 Dyad Engine 的功能
+  // （帮助机器人、主题生成、Auto）能解析出目标模型标识；对应渠道不存在时
+  // 这些功能自然不可用。
+  const providers: LanguageModelProvider[] = [];
   const modelsByProvider: Record<string, LanguageModel[]> = {};
-  for (const [providerId, models] of Object.entries(MODEL_OPTIONS)) {
-    if (providerId === FREE_PRO_MODEL_PROVIDER) {
-      continue;
-    }
-    modelsByProvider[providerId] = models.map((model) => ({
-      apiName: model.name,
-      displayName: model.displayName,
-      description: model.description,
-      tag: model.tag,
-      tagColor: model.tagColor,
-      maxOutputTokens: model.maxOutputTokens,
-      contextWindow: model.contextWindow,
-      temperature: model.temperature,
-      dollarSigns: model.dollarSigns,
-      effortSettings: model.effortSettings,
-      type: "cloud",
-    }));
-  }
 
   return {
     providers,
@@ -290,14 +258,8 @@ function convertRemoteCatalog(
       name: provider.displayName,
       hasFreeTier: provider.hasFreeTier,
       websiteUrl: provider.websiteUrl,
-      gatewayPrefix:
-        provider.gatewayPrefix ??
-        CLOUD_PROVIDERS[provider.id as keyof typeof CLOUD_PROVIDERS]
-          ?.gatewayPrefix,
+      gatewayPrefix: provider.gatewayPrefix,
       secondary: provider.secondary,
-      envVarName:
-        PROVIDER_TO_ENV_VAR[provider.id as keyof typeof PROVIDER_TO_ENV_VAR] ??
-        undefined,
       type: "cloud",
     }));
 

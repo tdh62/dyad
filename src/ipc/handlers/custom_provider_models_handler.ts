@@ -156,7 +156,10 @@ export async function listCustomProviderModels(
 
   const url = `${baseUrl.replace(/\/+$/, "")}/models`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), LIST_MODELS_TIMEOUT_MS);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    LIST_MODELS_TIMEOUT_MS,
+  );
   const fetchImpl = getTestFetchOption().fetch ?? fetch;
 
   try {

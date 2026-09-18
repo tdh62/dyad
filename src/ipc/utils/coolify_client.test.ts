@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CoolifyClient, isCoolifyStatus } from "./coolify_client";
 import { isSecureInstanceUrl } from "../types/coolify";
 import { DyadErrorKind } from "@/errors/dyad_error";
-import { shouldFilterTelemetryException } from "@/ipc/utils/telemetry";
 
 function mockFetch(
   responses: Array<{ status: number; body?: string }>,
@@ -267,10 +266,9 @@ describe("validating list responses", () => {
   });
 });
 
-describe("what a failure tells telemetry", () => {
+describe("what a failure tells the user", () => {
   it("does not repeat a proxy page that names the instance", async () => {
-    // External errors are uploaded with their message verbatim, and anything
-    // in front of a self-hosted Coolify tends to sign its own pages.
+    // Anything in front of a self-hosted Coolify tends to sign its own pages.
     mockFetch([
       {
         status: 521,
@@ -282,28 +280,8 @@ describe("what a failure tells telemetry", () => {
     });
   });
 
-  it("keeps a host named by a DNS failure out of telemetry", async () => {
-    // The address is deliberately left out of the message, but a connect
-    // failure puts it back: "getaddrinfo ENOTFOUND <their box>". The user
-    // needs to read that to fix a typo; nothing reports it.
-    const failing = vi.fn(async () => {
-      throw new Error("getaddrinfo ENOTFOUND coolify.internal.acme.com");
-    });
-    vi.stubGlobal("fetch", failing);
-
-    const err = await client()
-      .listServers()
-      .then(() => null)
-      .catch((e: unknown) => e as Error);
-
-    expect(err?.message).toContain("coolify.internal.acme.com");
-    expect(shouldFilterTelemetryException(err)).toBe(true);
-  });
-
-  it("tells the user why, and keeps that out of telemetry", async () => {
-    // The explanation is the useful part of a failure, so the user sees it —
-    // but it comes from a machine the user runs and can name a host or a
-    // connection string, so nothing reports it.
+  it("tells the user why a failure happened", async () => {
+    // The explanation is the useful part of a failure, so the user sees it.
     mockFetch([
       {
         status: 422,
@@ -315,6 +293,5 @@ describe("what a failure tells telemetry", () => {
       .then(() => null)
       .catch((e: unknown) => e as Error);
     expect(err?.message).toContain("Domain already in use.");
-    expect(shouldFilterTelemetryException(err)).toBe(true);
   });
 });

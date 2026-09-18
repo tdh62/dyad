@@ -4,34 +4,29 @@ import { ApiKeyConfiguration } from "./ApiKeyConfiguration";
 
 function renderApiKeyConfiguration({
   isSaving = false,
-  isTesting = false,
 }: {
   isSaving?: boolean;
-  isTesting?: boolean;
 } = {}) {
   return render(
     <ApiKeyConfiguration
-      provider="google"
-      providerDisplayName="Google"
+      provider="custom::local"
+      providerDisplayName="Local gateway"
       settings={
         {
           providerSettings: {
-            google: {
-              apiKey: { value: "test-google-key" },
+            "custom::local": {
+              apiKey: { value: "test-key" },
             },
           },
         } as any
       }
       envVars={{}}
-      envVarName="GOOGLE_API_KEY"
+      envVarName="LOCAL_GATEWAY_API_KEY"
       isSaving={isSaving}
-      isTesting={isTesting}
       saveError={null}
-      testSuccessMessage={null}
-      apiKeyInput="new-google-key"
+      apiKeyInput="new-key"
       onApiKeyInputChange={vi.fn()}
       onSaveKey={vi.fn()}
-      onTestKey={vi.fn()}
       onDeleteKey={vi.fn()}
       updateSettings={vi.fn()}
     />,
@@ -39,21 +34,7 @@ function renderApiKeyConfiguration({
 }
 
 describe("ApiKeyConfiguration", () => {
-  it("shows only the test button as testing during key tests", () => {
-    renderApiKeyConfiguration({ isTesting: true });
-
-    expect(
-      (screen.getByRole("button", { name: "Save Key" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
-    expect(
-      (screen.getByRole("button", { name: "Testing..." }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
-    expect(screen.queryByRole("button", { name: "Saving..." })).toBeNull();
-  });
-
-  it("shows only the save button as saving during key saves", () => {
+  it("shows the save button as saving and disables the other actions", () => {
     renderApiKeyConfiguration({ isSaving: true });
 
     expect(
@@ -61,9 +42,21 @@ describe("ApiKeyConfiguration", () => {
         .disabled,
     ).toBe(true);
     expect(
-      (screen.getByRole("button", { name: "Test Key" }) as HTMLButtonElement)
+      (
+        screen.getByRole("button", {
+          name: "Paste & Save",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Deleting..." }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
-    expect(screen.queryByRole("button", { name: "Testing..." })).toBeNull();
+  });
+
+  it("offers a save action when idle", () => {
+    renderApiKeyConfiguration();
+
+    expect(screen.getByRole("button", { name: "Save Key" })).toBeTruthy();
   });
 });

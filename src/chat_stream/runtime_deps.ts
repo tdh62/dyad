@@ -1,6 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { createStore } from "jotai";
-import type { PostHog } from "posthog-js";
 
 import type {
   PreviewReloadRequestFacade,
@@ -16,7 +15,6 @@ export interface ChatStreamRuntimeDeps {
   store: JotaiStore;
   queryClient: QueryClient;
   getSettings: () => UserSettings | null | undefined;
-  getPosthog: () => PostHog | null;
   requestPreviewReload: PreviewReloadRequestFacade["requestManualReload"];
   requestCapture: ScreenshotRequestFacade["requestCapture"];
   setPackageManagerWarning?: PackageManagerWarningSource["setWarning"];

@@ -59,7 +59,6 @@ import {
 import { storeDbTimestampAtCurrentVersion } from "../utils/neon_timestamp_utils";
 import { retryOnLocked } from "../utils/retryOnLocked";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
-import { syncCloudSandboxSnapshot } from "../utils/cloud_sandbox_provider";
 import {
   DIFF_BINARY_PLACEHOLDER,
   DIFF_TOO_LARGE_PLACEHOLDER,
@@ -199,9 +198,7 @@ function versionRuntimeAction(
   changedCodebase: boolean,
 ): "none" | "restart" {
   if (!changedCodebase) return "none";
-  return readSettings().runtimeMode2 === "cloud" || app.neonProjectId
-    ? "restart"
-    : "none";
+  return app.neonProjectId ? "restart" : "none";
 }
 
 function versionCommandResult({
@@ -368,17 +365,6 @@ async function resolveRestoreRef({
   return { currentBranch, revertRef, currentCommitHash };
 }
 
-async function syncCloudSandboxSnapshotBestEffort(appId: number) {
-  try {
-    await syncCloudSandboxSnapshot({ appId });
-  } catch (error) {
-    logger.warn(
-      `Cloud sandbox sync failed after version operation for app ${appId}:`,
-      error,
-    );
-  }
-}
-
 function normalizeVersionNote(note: string | null): string | null {
   const trimmed = note?.trim();
   return trimmed ? trimmed : null;
@@ -489,9 +475,9 @@ async function restoreBranchForPreview({
 }
 
 /**
- * Reverts the app's codebase (and Neon DB / Supabase functions / cloud sandbox)
- * to the given version. This does NOT modify any chat messages or acquire app
- * resources; callers coordinate repository, provider, and runtime config.
+ * Reverts the app's codebase (and Neon DB / Supabase functions) to the given
+ * version. This does NOT modify any chat messages or acquire app resources;
+ * callers coordinate repository, provider, and runtime config.
  */
 async function revertCodebaseToVersion({
   appId,
@@ -846,7 +832,6 @@ async function revertCodebaseToVersion({
       // Continue with the revert operation even if function deployment fails
     }
   }
-  await syncCloudSandboxSnapshotBestEffort(appId);
 
   const restoreCompletion = {
     ...restoreFacts,
@@ -1930,7 +1915,6 @@ export function registerVersionHandlers() {
           path: fullAppPath,
           ref: gitRef,
         });
-        await syncCloudSandboxSnapshotBestEffort(appId);
         return versionCommandResult({
           notification: warningMessage
             ? { kind: "warning", message: warningMessage }

@@ -8,7 +8,6 @@ import {
   buildSandboxCapabilitiesWithObserver,
 } from "@/ipc/utils/sandbox/capabilities";
 import { getAppBlueprintForChat } from "@/ipc/handlers/app_blueprint_handlers";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import { readSettings } from "@/main/settings";
 import {
   buildExecuteSandboxScriptDescription,
@@ -46,10 +45,6 @@ vi.mock("@/ipc/handlers/app_blueprint_handlers", () => ({
   deleteAppBlueprintForChat: vi.fn(),
   updateAppBlueprintVisuals: vi.fn(),
   registerAppBlueprintHandlers: vi.fn(),
-}));
-
-vi.mock("@/ipc/utils/telemetry", () => ({
-  sendTelemetryEvent: vi.fn(),
 }));
 
 vi.mock("@/main/settings", () => ({
@@ -172,14 +167,6 @@ describe("executeSandboxScriptTool", () => {
         script,
       }),
     );
-    expect(sendTelemetryEvent).toHaveBeenCalledWith(
-      "sandbox.script.failed",
-      expect.objectContaining({
-        appId: 456,
-        chatId: 123,
-        error: "Unexpected token ?.",
-      }),
-    );
   });
 
   it("defaults execution_thread to main and runs in-process", async () => {
@@ -196,10 +183,6 @@ describe("executeSandboxScriptTool", () => {
 
     expect(executeSandboxScriptInProcess).toHaveBeenCalledTimes(1);
     expect(runSandboxScript).not.toHaveBeenCalled();
-    expect(sendTelemetryEvent).toHaveBeenCalledWith(
-      "sandbox.script.completed",
-      expect.objectContaining({ executionThread: "main" }),
-    );
   });
 
   it("injects write_file as a main-thread host capability", async () => {
@@ -623,10 +606,6 @@ describe("executeSandboxScriptTool", () => {
     // The runner is given only the observer; the MCP capability map is
     // never built or passed on the worker path.
     expect(Object.keys(runnerCall)).not.toContain("capabilities");
-    expect(sendTelemetryEvent).toHaveBeenCalledWith(
-      "sandbox.script.completed",
-      expect.objectContaining({ executionThread: "worker" }),
-    );
   });
 
   it("does not inject write_file when the turn is read-only", async () => {

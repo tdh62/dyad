@@ -19,7 +19,6 @@ import {
   PRE_COMMIT_TIMEOUT_MS,
   runPreCommitHook,
 } from "@/ipc/services/pre_commit_service";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import { getPackageManagerCommandEnv } from "@/ipc/utils/socket_firewall";
 import { deleteSupabaseFunction } from "@/supabase_admin/supabase_management_client";
 import {
@@ -181,7 +180,6 @@ async function scheduleHookGeneratedFileSideEffects(
   ctx: AgentContext,
   beforeFunctionEntries: Set<string> | undefined,
 ): Promise<string | undefined> {
-  queueCloudSandboxSnapshotSync({ appId: ctx.appId, fullSync: true });
   if (!ctx.supabaseProjectId) {
     return;
   }

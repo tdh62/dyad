@@ -16,9 +16,6 @@ vi.mock("electron-log", () => ({
   },
 }));
 vi.mock("@/ipc/utils/git_utils", () => ({ gitRemove }));
-vi.mock("@/ipc/utils/cloud_sandbox_provider", () => ({
-  queueCloudSandboxSnapshotSync: vi.fn(),
-}));
 vi.mock("../../../../../../supabase_admin/supabase_management_client", () => ({
   deleteSupabaseFunction: vi.fn(),
 }));

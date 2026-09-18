@@ -28,7 +28,6 @@ import {
 } from "../../utils/visual_editing_utils";
 import { normalizePath } from "../../../../../shared/normalizePath";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import { registerTrustedIpcHandler } from "@/ipc/handlers/trusted_handle";
 
 // Client allows 7.5 MB raw; base64 expands by ~4/3 plus data URL prefix
@@ -196,10 +195,6 @@ export function registerVisualEditingHandlers() {
             normalizePath(path.relative(appPath, absoluteImagePath)),
           );
         }
-        queueCloudSandboxSnapshotSync({
-          appId,
-          changedPaths: [...changedPaths],
-        });
       } catch (error) {
         // Unstage any image files that were git-added before the failure
         for (const { appPath, filepath } of stagedGitPaths) {

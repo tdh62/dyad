@@ -87,7 +87,6 @@ import {
   resolveDefaultModelSelection,
 } from "../utils/model_effort";
 import log from "electron-log";
-import { sendTelemetryEvent } from "../utils/telemetry";
 import {
   getSupabaseContext,
   getSupabaseClientCode,
@@ -1116,11 +1115,6 @@ export function registerChatStreamHandlers() {
           req.chatId,
           trackedStream,
         );
-        if (concurrentChatCount !== null) {
-          sendTelemetryEvent("chat:concurrent-stream-started", {
-            concurrentChatCount,
-          });
-        }
         break;
       }
 
@@ -1274,13 +1268,6 @@ export function registerChatStreamHandlers() {
             mimeType: attachment.type,
             sizeBytes: fileBuffer.byteLength,
             createdAt: new Date().toISOString(),
-          });
-          sendTelemetryEvent("attachment.stored", {
-            appId: chat.app.id,
-            chatId: req.chatId,
-            attachmentType: attachment.attachmentType,
-            mimeType: attachment.type,
-            sizeBytes: fileBuffer.byteLength,
           });
 
           // Build dyad-media:// URL for display
@@ -2892,16 +2879,6 @@ This conversation includes one or more image attachments. When the user uploads 
               fullResponse,
               appPath: getDyadAppPath(updatedChat.app.path),
             });
-            sendTelemetryEvent("search_replace:fix", {
-              attemptNumber: 0,
-              success: issues.length === 0,
-              issueCount: issues.length,
-              errors: issues.map((i) => ({
-                filePath: i.filePath,
-                error: i.error,
-              })),
-            });
-
             let searchReplaceFixAttempts = 0;
             const originalFullResponse = fullResponse;
             const previousAttempts: ModelMessage[] = [];
@@ -2972,16 +2949,6 @@ This conversation includes one or more image attachments. When the user uploads 
               issues = await dryRunSearchReplace({
                 fullResponse: result.incrementalResponse,
                 appPath: getDyadAppPath(updatedChat.app.path),
-              });
-
-              sendTelemetryEvent("search_replace:fix", {
-                attemptNumber: searchReplaceFixAttempts,
-                success: issues.length === 0,
-                issueCount: issues.length,
-                errors: issues.map((i) => ({
-                  filePath: i.filePath,
-                  error: i.error,
-                })),
               });
             }
           }

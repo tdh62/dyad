@@ -16,9 +16,7 @@ import {
   isServerFunction,
   isSharedServerModule,
 } from "@/supabase_admin/supabase_utils";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import { withLock, getFileWriteKey } from "@/ipc/utils/lock_utils";
 
 const logger = log.scope("search_replace");
@@ -132,10 +130,6 @@ CRITICAL REQUIREMENTS FOR USING THIS TOOL:
       const result = applySearchReplace(original, operations);
 
       if (!result.success || typeof result.content !== "string") {
-        sendTelemetryEvent("local_agent:search_replace:failure", {
-          filePath: operationPath,
-          error: result.error ?? "unknown",
-        });
         throw new Error(
           `Failed to apply search-replace: ${result.error ?? "unknown"}`,
         );
@@ -143,13 +137,6 @@ CRITICAL REQUIREMENTS FOR USING THIS TOOL:
 
       await fs.promises.writeFile(fullFilePath, result.content);
       logger.log(`Successfully applied search-replace to: ${fullFilePath}`);
-      queueCloudSandboxSnapshotSync({
-        appId: ctx.appId,
-        changedPaths: [operationPath],
-      });
-      sendTelemetryEvent("local_agent:search_replace:success", {
-        filePath: operationPath,
-      });
     });
 
     // Deploy Supabase function if applicable

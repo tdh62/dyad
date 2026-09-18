@@ -10,7 +10,6 @@ import type {
 } from "../../../shared/code_explorer_types";
 import log from "electron-log";
 import { getTypeScriptCachePath } from "@/paths/paths";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import {
   type ResidentProcessRegistration,
   typescriptUtilityProcessScheduler,
@@ -550,8 +549,7 @@ function getHost(): CodeExplorerHost {
             ? "exited_with_pending_requests"
             : null;
     if (crashReason) {
-      sendTelemetryEvent("code_explorer:host_crash", {
-        error: true,
+      logger.error("Code explorer host crashed", {
         generation,
         reason: crashReason,
         exit_code: code,

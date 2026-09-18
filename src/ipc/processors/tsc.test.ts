@@ -3,7 +3,6 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
-import { shouldFilterTelemetryException } from "@/ipc/utils/telemetry";
 import {
   BufferedProcessSpawnError,
   type BufferedProcessResult,
@@ -64,7 +63,6 @@ describe("toProblemReportError", () => {
       DyadErrorKind.Precondition,
     );
     expect(getTypeCheckPreconditionKind(error)).toBe("typescript-not-found");
-    expect(shouldFilterTelemetryException(error)).toBe(true);
   });
 
   it("classifies missing TypeScript as a filtered precondition error", () => {
@@ -77,7 +75,6 @@ describe("toProblemReportError", () => {
     expect(error).toBeInstanceOf(DyadError);
     expect((error as DyadError).kind).toBe(DyadErrorKind.Precondition);
     expect(getTypeCheckPreconditionKind(error)).toBe("typescript-not-found");
-    expect(shouldFilterTelemetryException(error)).toBe(true);
   });
 
   it("classifies missing tsconfig as a filtered precondition error", () => {
@@ -674,7 +671,6 @@ describe("runTypeScriptCheck", () => {
 
     await expect(runTypeScriptCheck({ appPath })).rejects.toBe(spawnError);
     expect(getTypeCheckPreconditionKind(spawnError)).toBeUndefined();
-    expect(shouldFilterTelemetryException(spawnError)).toBe(false);
   });
 
   it("prefers tsconfig.app.json and reports missing configs", async () => {

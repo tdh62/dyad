@@ -320,7 +320,6 @@ function formatSystemInfoSection(
 - PNPM Version: ${field(debugInfo.pnpmVersion || "n/a")}
 - Node Path: ${field(debugInfo.nodePath || "n/a")}
 - Pro User ID: ${field(userBudget?.redactedUserId || "n/a")}
-- Telemetry ID: ${field(debugInfo.telemetryId || "n/a")}
 - Model: ${field(debugInfo.selectedLanguageModel || "n/a")}`;
 }
 

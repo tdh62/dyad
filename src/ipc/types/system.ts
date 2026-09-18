@@ -58,9 +58,6 @@ export const SystemDebugInfoSchema = z.object({
   nodeVersion: z.string().nullable(),
   pnpmVersion: z.string().nullable(),
   nodePath: z.string().nullable(),
-  telemetryId: z.string(),
-  telemetryConsent: z.string(),
-  telemetryUrl: z.string(),
   dyadVersion: z.string(),
   platform: z.string(),
   architecture: z.string(),
@@ -158,13 +155,6 @@ export const SubscriptionStatusSchema = z
 
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;
 
-export const TelemetryEventPayloadSchema = z.object({
-  eventName: z.string(),
-  properties: z.record(z.string(), z.any()).optional(),
-});
-
-export type TelemetryEventPayload = z.infer<typeof TelemetryEventPayloadSchema>;
-
 export const ForceCloseDetectedPayloadSchema = z.object({
   performanceData: z
     .object({
@@ -239,16 +229,6 @@ export const systemContracts = {
     channel: "native-theme:get-state",
     input: z.void(),
     output: NativeThemeStateSchema,
-  }),
-
-  getInitialLoadTelemetryContext: defineContract({
-    channel: "get-initial-load-telemetry-context",
-    input: z.void(),
-    output: z.object({
-      isFirstSession: z.boolean(),
-      // Absent when the previous session never measured an app.
-      previousSessionAppSize: AppSizeTelemetrySchema.nullish(),
-    }),
   }),
 
   getSystemDebugInfo: defineContract({
@@ -466,11 +446,6 @@ export const systemEvents = {
   nativeThemeUpdated: defineEvent({
     channel: "native-theme:updated",
     payload: NativeThemeStateSchema,
-  }),
-
-  telemetryEvent: defineEvent({
-    channel: "telemetry:event",
-    payload: TelemetryEventPayloadSchema,
   }),
 
   forceCloseDetected: defineEvent({

@@ -33,10 +33,6 @@ import {
   recoveryNeedsKeychainUnlock,
   retryRecoveryWithKeychainUnlock,
 } from "./main/safe_storage_legacy";
-import {
-  sendTelemetryEvent,
-  sendTelemetryEventToWindow,
-} from "./ipc/utils/telemetry";
 import { handleSupabaseOAuthReturn } from "./supabase_admin/supabase_return_handler";
 import { handleDyadProReturn } from "./main/pro";
 import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
@@ -610,16 +606,6 @@ export async function onReady() {
   await onFirstRunMaybe(settings);
   await createFreshStartupWindow();
   createApplicationMenu();
-
-  sendTelemetryEvent("runtime_source", {
-    runtime_source: settings.customNodePath
-      ? "custom"
-      : shouldUseManagedNode && managedNodeVersion
-        ? "managed"
-        : "system",
-    managed_node_installed: !!managedNodeVersion,
-    managed_node_version: managedNodeVersion,
-  });
 }
 
 function scheduleSafeStorageKeychainUnlockRetryAfterRendererLoad(): void {
@@ -789,7 +775,7 @@ function deliverPendingCrashRecovery(target: BrowserWindow): void {
     performance: pendingForceCloseData,
   });
 
-  sendTelemetryEventToWindow(target, "app:crash_detected", {
+  logger.error("app:crash_detected", {
     // Mark as error so renderer PostHog before_send sampling does not
     // drop 90% of events for non-Pro users (see src/renderer.tsx).
     error: true,
@@ -1030,16 +1016,13 @@ const createWindow = ({
     // consume the one-shot dialog or telemetry event.
     crashRecoveryWindowReadiness.markReady(browserWindow);
 
-    // Forward any pending renderer crash recorded on a previous load. We send
+    // Forward any pending renderer crash recorded on a previous load. We log
     // this from `did-finish-load` rather than `render-process-gone` because the
-    // renderer (which owns the PostHog client) is dead at crash time.
+    // renderer is dead at crash time.
     const rendererCrash = readRendererCrashRecord();
     if (rendererCrash) {
       const perf = rendererCrash.performance;
-      sendTelemetryEventToWindow(browserWindow, "renderer:crash_detected", {
-        // Mark as error so renderer PostHog before_send sampling does not
-        // drop 90% of events for non-Pro users (see src/renderer.tsx).
-        error: true,
+      logger.error("renderer:crash_detected", {
         reason: rendererCrash.reason,
         exit_code: rendererCrash.exitCode,
         crash_count: rendererCrash.count,
@@ -1602,10 +1585,7 @@ app.on("child-process-gone", (_event, details) => {
     "exitCode=",
     details.exitCode,
   );
-  sendTelemetryEvent("utility_process:crash_detected", {
-    // Mark as error so renderer PostHog before_send sampling does not
-    // drop 90% of events for non-Pro users (see src/renderer.tsx).
-    error: true,
+  logger.error("utility_process:crash_detected", {
     reason: details.reason,
     exit_code: details.exitCode,
     service_name: details.serviceName,

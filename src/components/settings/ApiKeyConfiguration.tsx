@@ -20,8 +20,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { AzureConfiguration } from "./AzureConfiguration";
-import { VertexConfiguration } from "./VertexConfiguration";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserSettings } from "@/lib/schemas";
@@ -47,13 +45,10 @@ interface ApiKeyConfigurationProps {
   envVars: Record<string, string | undefined>;
   envVarName?: string;
   isSaving: boolean;
-  isTesting: boolean;
   saveError: string | null;
-  testSuccessMessage: string | null;
   apiKeyInput: string;
   onApiKeyInputChange: (value: string) => void;
   onSaveKey: (value: string) => Promise<void>;
-  onTestKey?: (value: string) => Promise<void>;
   onDeleteKey: () => Promise<void>;
   updateSettings: (settings: Partial<UserSettings>) => Promise<UserSettings>;
   highlightPasteButton?: boolean;
@@ -67,15 +62,11 @@ export function ApiKeyConfiguration({
   envVars,
   envVarName,
   isSaving,
-  isTesting,
   saveError,
-  testSuccessMessage,
   apiKeyInput,
   onApiKeyInputChange,
   onSaveKey,
-  onTestKey,
   onDeleteKey,
-  updateSettings,
   highlightPasteButton = false,
   onDismissPasteHighlight,
 }: ApiKeyConfigurationProps) {
@@ -93,21 +84,6 @@ export function ApiKeyConfiguration({
     setShowUserApiKey(false);
   };
 
-  // Special handling for Azure OpenAI which requires environment variables
-  if (provider === "azure") {
-    return (
-      <AzureConfiguration
-        settings={settings}
-        envVars={envVars}
-        updateSettings={updateSettings}
-      />
-    );
-  }
-  // Special handling for Google Vertex AI which uses service account credentials
-  if (provider === "vertex") {
-    return <VertexConfiguration />;
-  }
-
   const envApiKey = envVarName ? envVars[envVarName] : undefined;
   const userApiKey = settings?.providerSettings?.[provider]?.apiKey?.value;
 
@@ -116,7 +92,7 @@ export function ApiKeyConfiguration({
     !userApiKey.startsWith("Invalid Key") &&
     userApiKey !== "Not Set";
   const hasEnvKey = !!envApiKey;
-  const isMutatingKey = isSaving || isTesting;
+  const isMutatingKey = isSaving;
 
   const activeKeySource = isValidUserKey
     ? "settings"
@@ -268,23 +244,8 @@ export function ApiKeyConfiguration({
               >
                 {isSaving ? "Saving..." : "Save Key"}
               </Button>
-              {onTestKey && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onTestKey(apiKeyInput || userApiKey || "")}
-                  disabled={isMutatingKey || (!apiKeyInput && !userApiKey)}
-                >
-                  {isTesting ? "Testing..." : "Test Key"}
-                </Button>
-              )}
             </div>
             {saveError && <p className="text-xs text-red-600">{saveError}</p>}
-            {testSuccessMessage && (
-              <p className="text-xs text-green-600 dark:text-green-400">
-                {testSuccessMessage}
-              </p>
-            )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Setting a key here will override the environment variable (if
               set).

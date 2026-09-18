@@ -15,7 +15,6 @@ import { appOperationCoordinator } from "@/ipc/services/app_operation_coordinato
 import type { AgentContext } from "./types";
 
 const mocks = vi.hoisted(() => ({
-  cloudSync: vi.fn(),
   loggerWarn: vi.fn(),
   runBufferedProcess: vi.fn(),
   deleteSupabaseFunction: vi.fn(),
@@ -36,10 +35,6 @@ vi.mock("electron-log", () => ({
 vi.mock("@/ipc/utils/buffered_process", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/ipc/utils/buffered_process")>()),
   runBufferedProcess: mocks.runBufferedProcess,
-}));
-
-vi.mock("@/ipc/utils/cloud_sandbox_provider", () => ({
-  queueCloudSandboxSnapshotSync: mocks.cloudSync,
 }));
 
 vi.mock("@/supabase_admin/supabase_management_client", () => ({
@@ -356,10 +351,6 @@ describe("runPreCommitTool", () => {
     expect(second).not.toContain("no files have changed");
     expect(hookRuns).toBe(2);
     expect(mocks.loggerWarn).toHaveBeenCalled();
-    expect(mocks.cloudSync).toHaveBeenCalledWith({
-      appId: 42,
-      fullSync: true,
-    });
   });
 
   it("reports a clean pass and refuses an unchanged rerun", async () => {
@@ -393,10 +384,6 @@ describe("runPreCommitTool", () => {
     expect(onWorkspaceMutation).toHaveBeenCalledWith(true);
     expect(second).toContain("passed, but the hook changed files");
     expect(hookRuns).toBe(2);
-    expect(mocks.cloudSync).toHaveBeenCalledWith({
-      appId: 42,
-      fullSync: true,
-    });
   });
 
   it("queues Supabase function paths changed in the hook for redeployment", async () => {

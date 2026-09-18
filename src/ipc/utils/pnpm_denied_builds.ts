@@ -4,14 +4,12 @@ import {
   recordDeniedPnpmBuilds,
   type PnpmIgnoredBuild,
 } from "@/ipc/utils/socket_firewall";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 
 export type PnpmDeniedBuildsTelemetrySource =
   | "add-dependency"
   | "app-run"
   | "app-upgrade"
-  | "self-heal"
-  | "cloud-sandbox";
+  | "self-heal";
 
 /**
  * Resolves the ignored-builds list the way every local flow should:
@@ -47,11 +45,6 @@ export async function recordAndReportDeniedPnpmBuilds({
     appPath,
     ignoredBuilds,
   });
-  if (deniedBuilds.length > 0) {
-    sendTelemetryEvent("pnpm:build-auto-denied", {
-      packages: deniedBuilds.map((ignoredBuild) => ignoredBuild.packageSpec),
-      source,
-    });
-  }
+
   return { deniedBuilds };
 }

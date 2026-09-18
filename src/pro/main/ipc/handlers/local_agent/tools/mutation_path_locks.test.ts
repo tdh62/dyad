@@ -7,16 +7,9 @@ import { getFileWriteKey } from "@/ipc/utils/lock_utils";
 import { deleteFileTool } from "./delete_file";
 import { renameFileTool } from "./rename_file";
 
-const {
-  gitAdd,
-  gitRemove,
-  queueCloudSandboxSnapshotSync,
-  withLockSpy,
-  withLocksSpy,
-} = vi.hoisted(() => ({
+const { gitAdd, gitRemove, withLockSpy, withLocksSpy } = vi.hoisted(() => ({
   gitAdd: vi.fn(),
   gitRemove: vi.fn(),
-  queueCloudSandboxSnapshotSync: vi.fn(),
   withLockSpy: vi.fn(),
   withLocksSpy: vi.fn(),
 }));
@@ -32,9 +25,6 @@ vi.mock("electron-log", () => ({
 }));
 
 vi.mock("@/ipc/utils/git_utils", () => ({ gitAdd, gitRemove }));
-vi.mock("@/ipc/utils/cloud_sandbox_provider", () => ({
-  queueCloudSandboxSnapshotSync,
-}));
 vi.mock("@/ipc/utils/lock_utils", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/ipc/utils/lock_utils")>();

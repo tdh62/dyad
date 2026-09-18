@@ -78,9 +78,7 @@ function createHarness() {
     cleanPort: vi.fn(async () => {
       calls.push("clean-port");
     }),
-    restartSandbox: vi.fn(),
     ensureProxy: vi.fn(),
-    startCloudLogs: vi.fn(),
     addLog: vi.fn(),
     clearLogs: vi.fn(() => {
       calls.push("clear-logs");

@@ -375,12 +375,6 @@ vi.mock(
   },
 );
 
-const mockSendTelemetryEvent = vi.hoisted(() => vi.fn());
-vi.mock("@/ipc/utils/telemetry", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/ipc/utils/telemetry")>()),
-  sendTelemetryEvent: mockSendTelemetryEvent,
-}));
-
 const {
   mockIsChatPendingCompaction,
   mockPerformCompaction,
@@ -5002,15 +4996,6 @@ describe("handleLocalAgentStream", () => {
       );
       expect(error.error).toContain(
         "Latest action: run_tests (error): Test command exited with code 1.",
-      );
-      expect(mockSendTelemetryEvent).toHaveBeenCalledWith(
-        "local_agent:implementer_failed",
-        {
-          failed_implementer_count: 1,
-          with_stored_thread_error_count: 1,
-          with_latest_activity_count: 1,
-          with_latest_activity_error_count: 1,
-        },
       );
     });
 

@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { usePostHog } from "posthog-js/react";
 import { useLocalModels } from "@/hooks/useLocalModels";
 import { useLocalLMSModels } from "@/hooks/useLMStudioModels";
 import { useLanguageModelsByProviders } from "@/hooks/useLanguageModelsByProviders";
@@ -135,7 +134,6 @@ export function ModelPicker() {
   } = useChatMode(isChatRoute ? chatId : null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const posthog = usePostHog();
   const freeModelQuota = useFreeModelQuota();
   const hasEstablishedChat = Boolean(
     chat && (chat.modelSelection || chat.messages.length > 0),
@@ -154,11 +152,6 @@ export function ModelPicker() {
       preferredEffortLevel:
         effortLevel ??
         settings.modelEffortPreferences?.[getModelPreferenceKey(model)],
-    });
-    posthog.capture("model-picker:select", {
-      provider: model.provider,
-      model: model.name,
-      effortLevel: modelSelection.effortLevel,
     });
     const fallbackChatMode = isFreeProBuildModeCombination(model, selectedMode)
       ? FREE_PRO_MODEL_FALLBACK_CHAT_MODE
@@ -209,11 +202,6 @@ export function ModelPicker() {
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (nextOpen) {
-      posthog.capture("model-picker:open", {
-        isDyadPro: settings ? isDyadProEnabled(settings) : false,
-      });
-    }
   };
 
   // Cloud models from providers
@@ -560,10 +548,6 @@ export function ModelPicker() {
   };
 
   const handleLockedModelClick = (providerId: string, model: LanguageModel) => {
-    posthog.capture("model-picker:locked-model-click", {
-      provider: providerId,
-      model: model.apiName,
-    });
     setOpen(false);
     setUnlockTarget({ providerId, model });
   };
@@ -572,9 +556,6 @@ export function ModelPicker() {
     if (!unlockTarget) {
       return;
     }
-    posthog.capture("model-picker:add-own-key-click", {
-      provider: unlockTarget.providerId,
-    });
     const providerId = unlockTarget.providerId;
     setUnlockTarget(null);
     navigate({

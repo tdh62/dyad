@@ -7,7 +7,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSettings } from "@/hooks/useSettings";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { showError } from "@/lib/toast";
 import { ipc } from "@/ipc/types";
 import { useAtomValue } from "jotai";
@@ -27,20 +26,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export function shouldShowCloudSandboxOption({
-  runtimeMode,
-  cloudSandboxExperimentEnabled,
-}: {
-  runtimeMode: RuntimeMode2;
-  cloudSandboxExperimentEnabled: boolean;
-}) {
-  return cloudSandboxExperimentEnabled || runtimeMode === "cloud";
-}
-
 export function RuntimeModeSelector() {
   const { settings, updateSettings } = useSettings();
   const { t } = useTranslation(["settings", "common"]);
-  const { userBudget } = useUserBudgetInfo();
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const currentAppUrl = useCurrentAppUrl(selectedAppId);
   const [pendingRuntimeMode, setPendingRuntimeMode] =
@@ -52,12 +40,6 @@ export function RuntimeModeSelector() {
   }
 
   const isDockerMode = settings?.runtimeMode2 === "docker";
-  const isCloudMode = settings?.runtimeMode2 === "cloud";
-  const hasCloudSandboxAccess = Boolean(userBudget);
-  const showCloudSandboxOption = shouldShowCloudSandboxOption({
-    runtimeMode: settings.runtimeMode2 ?? "host",
-    cloudSandboxExperimentEnabled: !!settings.experiments?.enableCloudSandbox,
-  });
 
   const applyRuntimeModeChange = async (value: RuntimeMode2) => {
     try {
@@ -68,13 +50,6 @@ export function RuntimeModeSelector() {
   };
 
   const handleRuntimeModeChange = (value: RuntimeMode2) => {
-    if (
-      value === "cloud" &&
-      (!hasCloudSandboxAccess || !showCloudSandboxOption)
-    ) {
-      return;
-    }
-
     if (currentAppUrl.appUrl && value !== (settings.runtimeMode2 ?? "host")) {
       setPendingRuntimeMode(value);
       setIsConfirmDialogOpen(true);
@@ -105,11 +80,6 @@ export function RuntimeModeSelector() {
           <SelectContent>
             <SelectItem value="host">Local (default)</SelectItem>
             <SelectItem value="docker">Docker (experimental)</SelectItem>
-            {showCloudSandboxOption && (
-              <SelectItem disabled={!hasCloudSandboxAccess} value="cloud">
-                Cloud Sandbox (Pro)
-              </SelectItem>
-            )}
           </SelectContent>
         </Select>
       </SettingField>
@@ -128,12 +98,6 @@ export function RuntimeModeSelector() {
             Docker Desktop
           </button>{" "}
           to be installed and running
-        </div>
-      )}
-      {isCloudMode && hasCloudSandboxAccess && (
-        <div className="text-sm text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/30 p-2 rounded">
-          Cloud Sandbox runs previews remotely and gives you a shareable preview
-          link. Note: running in cloud mode consumes Pro credits.
         </div>
       )}
       <AlertDialog

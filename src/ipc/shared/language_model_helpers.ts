@@ -6,26 +6,21 @@ import {
 import type { LanguageModelProvider, LanguageModel } from "@/ipc/types";
 import { eq } from "drizzle-orm";
 import log from "electron-log";
-import {
-  CLOUD_PROVIDERS,
-  LOCAL_PROVIDERS,
-  MODEL_OPTIONS,
-  PROVIDER_TO_ENV_VAR,
-} from "./language_model_constants";
-import { getBuiltinLanguageModelCatalog } from "./remote_language_model_catalog";
-import { FREE_PRO_MODEL_PROVIDER } from "@/lib/freeProModel";
+import { LOCAL_PROVIDERS } from "./language_model_constants";
 import { ApiProtocolSchema } from "./api_protocol";
 
 const logger = log.scope("language_model_helpers");
+
 /**
- * Fetches language model providers from both the database (custom) and hardcoded constants (cloud),
- * merging them with custom providers taking precedence.
- * @returns A promise that resolves to an array of LanguageModelProvider objects.
+ * Fetches language model providers: the local providers (Ollama / LM Studio)
+ * plus the custom providers the user defined.
+ *
+ * 内网 / 离线版本：内置云端渠道已全部移除，因此这里不再合并远端目录或
+ * 硬编码的云供应商。
  */
 export async function getLanguageModelProviders(): Promise<
   LanguageModelProvider[]
 > {
-  // Fetch custom providers from the database
   const customProvidersDb = await db
     .select()
     .from(languageModelProvidersSchema);
@@ -45,62 +40,29 @@ export async function getLanguageModelProviders(): Promise<
     });
   }
 
-  const builtinCatalog = await getBuiltinLanguageModelCatalog();
-  logger.debug("Loaded builtin catalog for provider list", {
-    source: builtinCatalog.source,
-    version: builtinCatalog.version,
-    providerCount: builtinCatalog.providers.length,
+  const localProviders: LanguageModelProvider[] = Object.entries(
+    LOCAL_PROVIDERS,
+  ).map(([id, details]) => ({
+    id,
+    name: details.displayName,
+    hasFreeTier: details.hasFreeTier,
+    type: "local" as const,
+  }));
+
+  logger.debug("Loaded language model providers", {
+    localProviderCount: localProviders.length,
+    customProviderCount: customProvidersMap.size,
   });
 
-  const hardcodedProviders: LanguageModelProvider[] = [
-    ...builtinCatalog.providers,
-  ];
-
-  // Merge in any CLOUD_PROVIDERS not present in the remote catalog
-  // (e.g. auto, azure, bedrock which are not in the remote API).
-  for (const [providerId, providerDetails] of Object.entries(CLOUD_PROVIDERS)) {
-    if (!hardcodedProviders.some((p) => p.id === providerId)) {
-      hardcodedProviders.push({
-        id: providerId,
-        name: providerDetails.displayName,
-        hasFreeTier: providerDetails.hasFreeTier,
-        websiteUrl: providerDetails.websiteUrl,
-        gatewayPrefix: providerDetails.gatewayPrefix,
-        secondary: providerDetails.secondary,
-        envVarName:
-          PROVIDER_TO_ENV_VAR[providerId as keyof typeof PROVIDER_TO_ENV_VAR] ??
-          undefined,
-        type: "cloud",
-      });
-    }
-  }
-
-  for (const providerKey in LOCAL_PROVIDERS) {
-    if (Object.prototype.hasOwnProperty.call(LOCAL_PROVIDERS, providerKey)) {
-      const key = providerKey as keyof typeof LOCAL_PROVIDERS;
-      const providerDetails = LOCAL_PROVIDERS[key];
-      hardcodedProviders.push({
-        id: key,
-        name: providerDetails.displayName,
-        hasFreeTier: providerDetails.hasFreeTier,
-        type: "local",
-      });
-    }
-  }
-
-  // 内网 / 离线版本：不暴露 Dyad 云端模型供应商（`auto`：auto / free /
-  // free-pro / balanced / value 等全部由 Dyad Engine 承载）。
-  // 用户只能选择本地模型（Ollama / LM Studio）或自带 API Key / 局域网地址
-  // 的供应商。
-  return [...hardcodedProviders, ...customProvidersMap.values()].filter(
-    (provider) => provider.id !== FREE_PRO_MODEL_PROVIDER,
-  );
+  return [...localProviders, ...customProvidersMap.values()];
 }
 
 /**
  * Fetches language models for a specific provider.
- * @param obj An object containing the providerId.
- * @returns A promise that resolves to an array of LanguageModel objects.
+ *
+ * Local providers have no static model list — the renderer discovers what the
+ * local server is actually serving. This returns only the models the user saved
+ * for the provider.
  */
 export async function getLanguageModels({
   providerId,
@@ -111,12 +73,9 @@ export async function getLanguageModels({
   const provider = allProviders.find((p) => p.id === providerId);
 
   if (!provider) {
-    console.warn(`Provider with ID "${providerId}" not found.`);
+    logger.warn(`Provider with ID "${providerId}" not found.`);
     return [];
   }
-
-  // Get custom models from DB for all provider types
-  let customModels: LanguageModel[] = [];
 
   try {
     const customModelsDb = await db
@@ -135,70 +94,31 @@ export async function getLanguageModels({
           : eq(languageModelsSchema.builtinProviderId, providerId),
       );
 
-    customModels = customModelsDb.map((model) => ({
+    return customModelsDb.map((model) => ({
       ...model,
       description: model.description ?? "",
       tag: undefined,
       maxOutputTokens: model.maxOutputTokens ?? undefined,
       contextWindow: model.contextWindow ?? undefined,
-      type: "custom",
+      type: "custom" as const,
     }));
   } catch (error) {
-    console.error(
+    logger.error(
       `Error fetching custom models for provider "${providerId}" from DB:`,
       error,
     );
-    // Continue with empty custom models array
+    return [];
   }
-
-  // If it's a cloud provider, also get the hardcoded models
-  let hardcodedModels: LanguageModel[] = [];
-  if (provider.type === "cloud") {
-    const builtinCatalog = await getBuiltinLanguageModelCatalog();
-    logger.debug("Loading cloud models from builtin catalog", {
-      providerId,
-      source: builtinCatalog.source,
-      version: builtinCatalog.version,
-      hasProviderModels: providerId in builtinCatalog.modelsByProvider,
-    });
-    if (providerId in builtinCatalog.modelsByProvider) {
-      hardcodedModels = builtinCatalog.modelsByProvider[providerId] || [];
-    } else if (providerId in MODEL_OPTIONS) {
-      // Fall back to hardcoded MODEL_OPTIONS for providers not in the remote
-      // catalog (e.g. auto, azure, bedrock).
-      hardcodedModels = MODEL_OPTIONS[providerId].map((model) => ({
-        apiName: model.name,
-        displayName: model.displayName,
-        description: model.description,
-        tag: model.tag,
-        tagColor: model.tagColor,
-        maxOutputTokens: model.maxOutputTokens,
-        contextWindow: model.contextWindow,
-        temperature: model.temperature,
-        dollarSigns: model.dollarSigns,
-        effortSettings: model.effortSettings,
-        type: "cloud" as const,
-      }));
-    } else {
-      console.warn(
-        `Provider "${providerId}" is cloud type but not found in builtin catalog or MODEL_OPTIONS.`,
-      );
-    }
-  }
-
-  return [...hardcodedModels, ...customModels];
 }
 
 /**
  * Fetches all language models grouped by their provider IDs.
- * @returns A promise that resolves to a Record mapping provider IDs to arrays of LanguageModel objects.
  */
 export async function getLanguageModelsByProviders(): Promise<
   Record<string, LanguageModel[]>
 > {
   const providers = await getLanguageModelProviders();
 
-  // Fetch all models concurrently
   const modelPromises = providers
     .filter((p) => p.type !== "local")
     .map(async (provider) => {
@@ -206,10 +126,8 @@ export async function getLanguageModelsByProviders(): Promise<
       return { providerId: provider.id, models };
     });
 
-  // Wait for all requests to complete
   const results = await Promise.all(modelPromises);
 
-  // Convert the array of results to a record
   const record: Record<string, LanguageModel[]> = {};
   for (const result of results) {
     record[result.providerId] = result.models;

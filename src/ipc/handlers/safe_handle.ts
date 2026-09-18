@@ -5,7 +5,6 @@ import {
   createIpcErrorEnvelope,
   createIpcSuccessEnvelope,
 } from "../contracts/core";
-import { sendTelemetryException } from "../utils/telemetry";
 import { IS_TEST_BUILD } from "../utils/test_utils";
 import { registerTrustedIpcHandler } from "./trusted_handle";
 
@@ -16,8 +15,6 @@ export function createLoggedHandler(logger: log.LogFunctions) {
   ) => {
     const handleError = (error: unknown, args: any[]) => {
       logger.error(`Error in ${fn.name}: args: ${JSON.stringify(args)}`, error);
-      sendTelemetryException(error, { ipc_channel: channel });
-      // Preserve DyadError so telemetry classification stay consistent.
       if (error instanceof DyadError) {
         return createIpcErrorEnvelope(error);
       }

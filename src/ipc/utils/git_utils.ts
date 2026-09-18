@@ -25,11 +25,7 @@ import {
   selectTextLineRange,
 } from "@/utils/dotenv_redaction";
 import { runBufferedProcess } from "./buffered_process";
-import {
-  collectGitLaunchDiagnostics,
-  getGitLaunchTelemetryProperties,
-} from "./git_launch_diagnostics";
-import { sendTelemetryEvent } from "./telemetry";
+import { collectGitLaunchDiagnostics } from "./git_launch_diagnostics";
 
 export { GIT_ERROR_CODES } from "@/shared/git_error_codes";
 
@@ -229,10 +225,6 @@ export async function execGit(
         if (!didReportGitLaunchFailure) {
           didReportGitLaunchFailure = true;
           logger.error("Git process failed to launch", diagnostics);
-          sendTelemetryEvent(
-            "git:launch_error",
-            getGitLaunchTelemetryProperties(diagnostics),
-          );
         }
       } catch (diagnosticError) {
         logger.warn(

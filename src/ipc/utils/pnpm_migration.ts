@@ -18,7 +18,6 @@ import {
   getPackageManagerSignal,
   signalPrefersPnpm,
 } from "@/ipc/utils/package_manager_selection";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import { isVersionAtLeast } from "@/shared/version_utils";
 
 const logger = log.scope("pnpm_migration");
@@ -237,9 +236,4 @@ export async function applyPnpmVersionMigration({
       DyadErrorKind.External,
     );
   }
-
-  sendTelemetryEvent("pnpm:version-migration-applied", {
-    fromLockfileVersion: previousLockfileVersion,
-    toPnpmVersion: pnpmSupport.version,
-  });
 }

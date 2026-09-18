@@ -73,8 +73,6 @@ import {
 } from "../utils/playwright_discovery";
 import { parseTestCases } from "../utils/parse_test_cases";
 import { getPackageManagerCommandEnv } from "../utils/socket_firewall";
-import { queueCloudSandboxSnapshotSync } from "../utils/cloud_sandbox_provider";
-import { sendTelemetryEvent } from "../utils/telemetry";
 import {
   prepareIsolatedTestDatabase,
   type PreparedIsolation,
@@ -696,16 +694,6 @@ async function runPreviewTestBatch({
   const inconclusive = result.results.filter(
     (entry) => entry.status === "inconclusive",
   ).length;
-  sendTelemetryEvent("e2e_tests_run", {
-    total: result.results.length,
-    passed,
-    failed,
-    inconclusive,
-    first_run: installed,
-    single_file: Boolean(normalizedTestFile),
-    parallel: false,
-    slow_mo: Boolean(slowMo),
-  });
 
   return result;
 }
@@ -1012,17 +1000,6 @@ export async function runAppTestsCore({
   const inconclusive = results.filter(
     (r) => r.status === "inconclusive",
   ).length;
-  sendTelemetryEvent("e2e_tests_run", {
-    total: results.length,
-    passed,
-    failed,
-    inconclusive,
-    first_run: installed,
-    single_file: Boolean(testFile),
-    parallel: Boolean(parallel),
-    slow_mo: Boolean(slowMo),
-  });
-
   return { appId, results };
 }
 
@@ -1832,10 +1809,6 @@ export function registerTestsHandlers() {
             }
           }
         }
-        queueCloudSandboxSnapshotSync({
-          appId: params.appId,
-          deletedPaths: [testFile],
-        });
         return {
           file: testFile,
           committed: commitHash !== null,

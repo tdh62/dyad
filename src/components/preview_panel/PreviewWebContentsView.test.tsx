@@ -87,7 +87,6 @@ vi.mock("@/hooks/useSettings", () => ({
 
 vi.mock("@/ipc/types", () => ({
   ipc: {
-    app: { createCloudSandboxShareLink: vi.fn() },
     system: { openExternalUrl: vi.fn() },
     previewView: {
       show: vi.fn(async () => {}),

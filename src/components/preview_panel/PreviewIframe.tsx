@@ -15,7 +15,6 @@ import {
   ArrowRight,
   RefreshCw,
   ExternalLink,
-  Cloud,
   Cog,
   ChevronDown,
   MousePointerClick,
@@ -324,14 +323,6 @@ export const PreviewIframe = ({
   // Device mode state
   const deviceMode: DeviceMode = settings?.previewDeviceMode ?? "desktop";
   const [isDevicePopoverOpen, setIsDevicePopoverOpen] = useState(false);
-  const {
-    mutateAsync: createCloudSandboxShareLink,
-    isPending: isCreatingCloudSandboxShareLink,
-  } = useMutation({
-    mutationFn: async ({ appId }: { appId: number }) => {
-      return ipc.app.createCloudSandboxShareLink({ appId });
-    },
-  });
 
   // Device configurations
   const deviceWidthConfig = {
@@ -341,8 +332,6 @@ export const PreviewIframe = ({
 
   //detect if the user is using Mac
   const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-  const isCloudMode = mode === "cloud";
-  const isCloudSandboxMode = settings?.runtimeMode2 === "cloud";
   const { mutate: clearSessionData } = useMutation({
     mutationFn: () => {
       return ipc.system.clearSessionData();
@@ -355,80 +344,6 @@ export const PreviewIframe = ({
       showError(`Error clearing preview data: ${error}`);
     },
   });
-  const { data: cloudSandboxStatus } = useQuery({
-    queryKey: queryKeys.cloudSandboxes.status({ appId: selectedAppId }),
-    queryFn: async () => {
-      if (selectedAppId === null) {
-        return null;
-      }
-      return ipc.app.getCloudSandboxStatus({ appId: selectedAppId });
-    },
-    enabled: isCloudMode && selectedAppId !== null,
-    refetchInterval: 15_000,
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (!isCloudMode || !cloudSandboxStatus) {
-      return;
-    }
-
-    if (
-      cloudSandboxStatus.status === "destroyed" &&
-      (cloudSandboxStatus.terminationReason === "credits_exhausted" ||
-        cloudSandboxStatus.terminationReason === "billing_unavailable" ||
-        cloudSandboxStatus.lastErrorCode === "sandbox_credits_exhausted" ||
-        cloudSandboxStatus.lastErrorCode === "sandbox_billing_unavailable")
-    ) {
-      sendIframeEvent({
-        type: "IFRAME_ERROR",
-        message: cloudSandboxStatus.lastErrorMessage
-          ? cloudSandboxStatus.lastErrorMessage.includes("Dyad stopped")
-            ? cloudSandboxStatus.lastErrorMessage
-            : cloudSandboxStatus.terminationReason === "credits_exhausted"
-              ? "This cloud sandbox was stopped because your Dyad Pro credits ran out. Add credits and start it again."
-              : "This cloud sandbox was stopped because Dyad could not confirm billing. Please try starting it again."
-          : cloudSandboxStatus.terminationReason === "credits_exhausted"
-            ? "This cloud sandbox was stopped because your Dyad Pro credits ran out. Add credits and start it again."
-            : "This cloud sandbox was stopped because Dyad could not confirm billing. Please try starting it again.",
-        source: "dyad-app",
-      });
-    }
-  }, [cloudSandboxStatus, isCloudMode, sendIframeEvent]);
-
-  useEffect(() => {
-    if (!isCloudMode || !cloudSandboxStatus) {
-      return;
-    }
-
-    const localSyncErrorMessage = cloudSandboxStatus.localSyncErrorMessage;
-
-    if (localSyncErrorMessage) {
-      sendIframeEvent({
-        type: "SYNC_ERROR",
-        message: localSyncErrorMessage,
-      });
-      return;
-    }
-
-    sendIframeEvent({ type: "SYNC_RECOVERED" });
-  }, [cloudSandboxStatus, isCloudMode, sendIframeEvent]);
-
-  useEffect(() => {
-    if (!isCloudMode || !cloudSandboxStatus) {
-      return;
-    }
-
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.userBudget.info,
-    });
-  }, [
-    cloudSandboxStatus?.billingSlicesCharged,
-    cloudSandboxStatus?.terminationReason,
-    isCloudMode,
-    queryClient,
-  ]);
-
   const analyzeComponent = async (componentId: string) => {
     if (!componentId || !selectedAppId) return;
 
@@ -1052,18 +967,11 @@ export const PreviewIframe = ({
 
   const openPreviewInBrowser = async () => {
     try {
-      const url = await resolvePreviewBrowserUrl({
-        isCloudMode,
-        selectedAppId,
-        originalUrl,
-        createCloudSandboxShareLink,
-      });
+      const url = await resolvePreviewBrowserUrl({ originalUrl });
       await ipc.system.openExternalUrl(url);
     } catch (error) {
       showError(
-        error instanceof Error
-          ? error.message
-          : "Failed to open cloud sandbox share link.",
+        error instanceof Error ? error.message : "Failed to open preview.",
       );
     }
   };
@@ -1075,13 +983,6 @@ export const PreviewIframe = ({
     );
   };
 
-  const onRecreateSandbox = () => {
-    runAppLifecycleInBackground(
-      "restart",
-      restartApp({ recreateSandbox: true }),
-    );
-  };
-
   // Isolation setup restarts the dev server and signs the test user in, so the
   // preview is showing a page nothing the user does will survive. It reads as
   // inert rather than covered — see RecordingSetupOverlay.
@@ -1089,9 +990,7 @@ export const PreviewIframe = ({
 
   const { showOpenBrowser } =
     getPreviewToolbarActionVisibility(previewToolbarWidth);
-  const openBrowserDisabled = isCloudMode
-    ? isCreatingCloudSandboxShareLink
-    : !originalUrl;
+  const openBrowserDisabled = !originalUrl;
 
   return (
     <div className="flex flex-col h-full">
@@ -1248,25 +1147,6 @@ export const PreviewIframe = ({
 
           {/* Browser navigation group */}
           <div className="flex shrink-0 items-center gap-1.5">
-            {isCloudMode && (
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <div
-                      aria-label="Running in a cloud sandbox"
-                      className="flex items-center rounded-full bg-sky-100 px-2 py-1 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300"
-                      data-testid="preview-cloud-badge"
-                      role="status"
-                    />
-                  }
-                >
-                  <Cloud size={14} />
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  Running in a Cloud sandbox
-                </TooltipContent>
-              </Tooltip>
-            )}
             <div className="flex items-center gap-0.5">
               <Tooltip>
                 <TooltipTrigger
@@ -1504,18 +1384,14 @@ export const PreviewIframe = ({
                   <button
                     onClick={onRestart}
                     data-testid="preview-restart-button"
-                    aria-label={
-                      isCloudMode ? "Restart Cloud Sandbox" : "Restart"
-                    }
+                    aria-label="Restart"
                     className={PREVIEW_TOOLBAR_BUTTON_CLASSES}
                   />
                 }
               >
                 <Power size={16} />
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {isCloudMode ? "Restart Cloud Sandbox" : "Restart App"}
-              </TooltipContent>
+              <TooltipContent side="bottom">Restart App</TooltipContent>
             </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -1555,17 +1431,6 @@ export const PreviewIframe = ({
                     </span>
                   </div>
                 </DropdownMenuItem>
-                {isCloudSandboxMode && (
-                  <DropdownMenuItem onClick={onRecreateSandbox}>
-                    <Cog size={16} />
-                    <div className="flex flex-col">
-                      <span>Recreate Sandbox</span>
-                      <span className="text-xs text-muted-foreground">
-                        Destroys the current sandbox and creates a new one
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

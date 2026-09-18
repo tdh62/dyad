@@ -42,7 +42,6 @@ vi.mock("@/ipc/types", () => ({
 }));
 
 import {
-  earlyTelemetryEvents,
   earlyChatTabRemovalEvents,
   chatNavigationEvents,
   registerEarlyRendererEvents,
@@ -73,20 +72,6 @@ describe("ReplayEvent", () => {
 
     expect(firstListener).toHaveBeenCalledWith("live");
     expect(replacementListener).toHaveBeenCalledWith("between-mounts");
-  });
-
-  it("buffers telemetry emitted before renderer services mount", () => {
-    const listener = vi.fn();
-    const payload = {
-      eventName: "app:crash_detected",
-      properties: { crashType: "force_close" },
-    };
-    registerEarlyRendererEvents();
-
-    eventHandlers.telemetry(payload);
-    earlyTelemetryEvents.subscribe(listener);
-
-    expect(listener).toHaveBeenCalledWith(payload);
   });
 
   it("buffers transferred-tab removal until the tab UI subscribes", () => {

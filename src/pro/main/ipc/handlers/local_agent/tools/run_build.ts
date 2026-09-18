@@ -1340,12 +1340,6 @@ export const runBuildTool: ToolDefinition<z.infer<typeof runBuildSchema>> = {
             count: 0,
           } satisfies BuildAttemptState);
           const currentMutationCount = ctx.mutationCount ?? 0;
-          if (runningApps.get(ctx.appId)?.mode === "cloud") {
-            throw new DyadError(
-              "Production build verification is unavailable while this app is running in a cloud sandbox because the build would run on the host instead of inside that sandbox. Switch the app runtime to Host and try again.",
-              DyadErrorKind.Precondition,
-            );
-          }
           if (state.count >= MAX_BUILD_RUNS_PER_TURN) {
             const body = `The ${MAX_BUILD_RUNS_PER_TURN}-build limit for this turn has been reached. Stop retrying and summarize the remaining build issue for the user.`;
             completeStatus(ctx, "Build limit reached", body, "warning");

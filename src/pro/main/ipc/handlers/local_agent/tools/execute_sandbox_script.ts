@@ -11,7 +11,6 @@ import {
 } from "@/ipc/utils/sandbox/capabilities";
 import { SANDBOX_SCRIPT_SOURCE_LIMIT_BYTES } from "@/ipc/utils/sandbox/limits";
 import { DyadError, DyadErrorKind, isDyadError } from "@/errors/dyad_error";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
 import { DYAD_MEDIA_DIR_NAME } from "@/ipc/utils/media_path_utils";
 import { readSettings } from "@/main/settings";
 import type { UserSettings } from "@/lib/schemas";
@@ -380,38 +379,10 @@ export const executeSandboxScriptTool: ToolDefinition<ExecuteSandboxScriptArgs> 
           }),
         );
 
-        sendTelemetryEvent("sandbox.script.completed", {
-          chatId: ctx.chatId,
-          appId: ctx.appId,
-          executionMs: result.executionMs,
-          truncated: result.truncated,
-          executionThread,
-        });
-
-        if (result.truncated) {
-          sendTelemetryEvent("sandbox.script.truncated", {
-            chatId: ctx.chatId,
-            appId: ctx.appId,
-            fullOutputPath: result.fullOutputPath,
-            executionThread,
-          });
-        }
-
         return JSON.stringify(result);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        sendTelemetryEvent(
-          errorMessage.includes("timed out")
-            ? "sandbox.script.timeout"
-            : "sandbox.script.failed",
-          {
-            chatId: ctx.chatId,
-            appId: ctx.appId,
-            error: errorMessage,
-            executionThread,
-          },
-        );
         throw new DyadError(
           buildSandboxFailureMessage({
             script: args.script,

@@ -8,28 +8,13 @@ import {
   useFirstPromptProviderResume,
   useFirstPromptSaga,
 } from "@/first_prompt/FirstPromptProvider";
-import { ipc, type ProviderApiKeyValidationProvider } from "@/ipc/types";
+import { ipc } from "@/ipc/types";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {} from "@/components/ui/accordion";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
-import {
-  UserSettings,
-  AzureProviderSetting,
-  VertexProviderSetting,
-} from "@/lib/schemas";
-import { DyadErrorKind } from "@/errors/dyad_error";
+import { UserSettings } from "@/lib/schemas";
 import {
   findInvalidProviderApiKeyCharacter,
   formatInvalidProviderApiKeyMessage,
@@ -42,34 +27,6 @@ import { ModelsSection } from "./ModelsSection";
 
 interface ProviderSettingsPageProps {
   provider: string;
-}
-
-type ApiKeyValidationDialogState = {
-  message: string;
-  apiKey: string;
-  allowKeepInvalidKey: boolean;
-  errorKind?: DyadErrorKind;
-};
-
-const VALIDATED_API_KEY_PROVIDERS = new Set<string>(["google", "openrouter"]);
-
-function getErrorKind(error: unknown): DyadErrorKind | undefined {
-  const kind =
-    typeof error === "object" && error !== null
-      ? (error as { kind?: unknown }).kind
-      : undefined;
-  return typeof kind === "string" &&
-    Object.values(DyadErrorKind).includes(kind as DyadErrorKind)
-    ? (kind as DyadErrorKind)
-    : undefined;
-}
-
-function getApiKeyValidationDialogTitle(
-  dialog: ApiKeyValidationDialogState | null,
-) {
-  return dialog?.errorKind === DyadErrorKind.Auth
-    ? "API key rejected"
-    : "Could not verify API key";
 }
 
 export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
@@ -106,13 +63,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
 
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(
-    null,
-  );
-  const [apiKeyValidationDialog, setApiKeyValidationDialog] =
-    useState<ApiKeyValidationDialogState | null>(null);
   const [showStartBuildingBanner, setShowStartBuildingBanner] = useState(false);
   // Set when the user opens the provider's website to get a key; on the next
   // window refocus we nudge them toward the paste button.
@@ -136,42 +87,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
     userApiKey !== "Not Set";
   const hasEnvKey = !!(envVarName && envVars[envVarName]);
 
-  const azureSettings = settings?.providerSettings?.azure as
-    | AzureProviderSetting
-    | undefined;
-  const azureApiKeyFromSettings = (azureSettings?.apiKey?.value ?? "").trim();
-  const azureResourceNameFromSettings = (
-    azureSettings?.resourceName ?? ""
-  ).trim();
-  const azureHasSavedSettings = Boolean(
-    azureApiKeyFromSettings && azureResourceNameFromSettings,
-  );
-  const azureHasEnvConfiguration = Boolean(
-    envVars["AZURE_API_KEY"] && envVars["AZURE_RESOURCE_NAME"],
-  );
-
-  const vertexSettings = settings?.providerSettings?.vertex as
-    | VertexProviderSetting
-    | undefined;
-  const isVertexConfigured = Boolean(
-    vertexSettings?.projectId &&
-    vertexSettings?.location &&
-    vertexSettings?.serviceAccountKey?.value,
-  );
-
-  const isAzureConfigured =
-    provider === "azure"
-      ? azureHasSavedSettings || azureHasEnvConfiguration
-      : false;
-
-  const isConfigured =
-    provider === "azure"
-      ? isAzureConfigured
-      : provider === "vertex"
-        ? isVertexConfigured
-        : isValidUserKey || hasEnvKey; // Configured if either is set
-
-  const shouldValidateApiKey = VALIDATED_API_KEY_PROVIDERS.has(provider);
+  const isConfigured = isValidUserKey || hasEnvKey; // Configured if either is set
 
   const normalizeAndValidateKeyInput = (value: string): string | null => {
     const normalizedValue = normalizeProviderApiKeyInput(value);
@@ -194,10 +110,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
   };
 
   // --- Save Handler ---
-  const handleSaveKey = async (
-    value: string,
-    options: { skipValidation?: boolean } = {},
-  ) => {
+  const handleSaveKey = async (value: string) => {
     setHighlightPasteButton(false);
     const normalizedValue = normalizeAndValidateKeyInput(value);
     if (!normalizedValue) {
@@ -205,27 +118,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
     }
     setIsSaving(true);
     setSaveError(null);
-    setTestSuccessMessage(null);
     try {
-      if (shouldValidateApiKey && !options.skipValidation) {
-        try {
-          await ipc.settings.validateProviderApiKey({
-            provider: provider as ProviderApiKeyValidationProvider,
-            apiKey: normalizedValue,
-          });
-        } catch (error: any) {
-          setApiKeyValidationDialog({
-            message:
-              error?.message ||
-              `Dyad could not verify this ${providerDisplayName} API key.`,
-            apiKey: normalizedValue,
-            allowKeepInvalidKey: true,
-            errorKind: getErrorKind(error),
-          });
-          return;
-        }
-      }
-
       const isFirstProviderSetup = !isAnyProviderSetup();
 
       const settingsUpdate: Partial<UserSettings> = {
@@ -254,39 +147,6 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
       setSaveError(error.message || "Failed to save API key.");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleTestKey = async (value: string) => {
-    const normalizedValue = normalizeAndValidateKeyInput(value);
-    if (!normalizedValue) {
-      return;
-    }
-    if (!shouldValidateApiKey) {
-      setSaveError(`${providerDisplayName} API keys cannot be tested yet.`);
-      return;
-    }
-
-    setIsTesting(true);
-    setSaveError(null);
-    setTestSuccessMessage(null);
-    try {
-      await ipc.settings.validateProviderApiKey({
-        provider: provider as ProviderApiKeyValidationProvider,
-        apiKey: normalizedValue,
-      });
-      setTestSuccessMessage(`${providerDisplayName} API key looks good.`);
-    } catch (error: any) {
-      setApiKeyValidationDialog({
-        message:
-          error?.message ||
-          `Dyad could not verify this ${providerDisplayName} API key.`,
-        apiKey: normalizedValue,
-        allowKeepInvalidKey: false,
-        errorKind: getErrorKind(error),
-      });
-    } finally {
-      setIsTesting(false);
     }
   };
 
@@ -334,9 +194,6 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
   useEffect(() => {
     if (saveError) {
       setSaveError(null);
-    }
-    if (testSuccessMessage) {
-      setTestSuccessMessage(null);
     }
   }, [apiKeyInput]);
 
@@ -402,45 +259,6 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
 
   return (
     <div className="min-h-screen w-full">
-      <AlertDialog
-        open={!!apiKeyValidationDialog}
-        onOpenChange={(open) => {
-          if (!open) {
-            setApiKeyValidationDialog(null);
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {getApiKeyValidationDialogTitle(apiKeyValidationDialog)}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {apiKeyValidationDialog?.message}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            {apiKeyValidationDialog?.allowKeepInvalidKey && (
-              <AlertDialogCancel
-                onClick={() => {
-                  const apiKey = apiKeyValidationDialog.apiKey;
-                  setApiKeyValidationDialog(null);
-                  void handleSaveKey(apiKey, { skipValidation: true });
-                }}
-              >
-                Keep invalid API key
-              </AlertDialogCancel>
-            )}
-            <AlertDialogAction
-              onClick={() => {
-                setApiKeyValidationDialog(null);
-              }}
-            >
-              Try another API key
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       {shouldShowStartBuildingBanner && (
         <button
           type="button"
@@ -502,16 +320,13 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
               envVars={envVars}
               envVarName={envVarName}
               isSaving={isSaving}
-              isTesting={isTesting}
               saveError={saveError}
-              testSuccessMessage={testSuccessMessage}
               apiKeyInput={apiKeyInput}
               onApiKeyInputChange={(value) => {
                 setHighlightPasteButton(false);
                 setApiKeyInput(value);
               }}
               onSaveKey={handleSaveKey}
-              onTestKey={shouldValidateApiKey ? handleTestKey : undefined}
               onDeleteKey={handleDeleteKey}
               updateSettings={updateSettings}
               highlightPasteButton={highlightPasteButton}

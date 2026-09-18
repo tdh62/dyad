@@ -9,10 +9,7 @@ const testHome = vi.hoisted(() => ({ dir: "" }));
 vi.mock("@/paths/paths", () => ({
   getUserDataPath: () => testHome.dir,
 }));
-import {
-  isDyadError,
-  isDyadErrorKindFilteredFromTelemetry,
-} from "@/errors/dyad_error";
+import { isDyadError } from "@/errors/dyad_error";
 import {
   coolifyKeyName,
   ensureDeployKey,
@@ -293,8 +290,8 @@ describe("ensureDeployKey", () => {
     // The message names the key path on purpose, which is what the user needs
     // to act on it — and that path is the userData directory, so it carries
     // the OS username on macOS and Windows plus the owner and repo in the
-    // filename. The kind is what decides whether that reaches PostHog, and a
-    // corrupt local file is user state rather than a third-party fault.
+    // filename. A corrupt local file is user state rather than a third-party
+    // fault, so it is a precondition failure.
     await ensureDeployKey("dyad_deploy_test_leak");
     fs.rmSync(keyFile("dyad_deploy_test_leak.pub"));
     fs.writeFileSync(keyFile("dyad_deploy_test_leak"), "not a key at all");
@@ -305,7 +302,6 @@ describe("ensureDeployKey", () => {
 
     expect(isDyadError(error)).toBe(true);
     expect(error.message).toContain("dyad_deploy_test_leak");
-    expect(isDyadErrorKindFilteredFromTelemetry(error.kind)).toBe(true);
   });
 
   it("reuses an existing pair rather than rotating it", async () => {

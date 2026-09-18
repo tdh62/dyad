@@ -21,9 +21,6 @@ const debugInfo: SystemDebugInfo = {
   nodeVersion: "20.0.0",
   pnpmVersion: "9.0.0",
   nodePath: "/usr/bin/node",
-  telemetryId: "telemetry-id",
-  telemetryConsent: "opted_in",
-  telemetryUrl: "https://example.test",
   dyadVersion: "1.2.3",
   platform: "linux",
   architecture: "x64",
@@ -539,7 +536,6 @@ describe("issue URL budget", () => {
     ["nodeVersion", { nodeVersion: absurd }],
     ["pnpmVersion", { pnpmVersion: absurd }],
     ["nodePath", { nodePath: absurd }],
-    ["telemetryId", { telemetryId: absurd }],
     ["selectedLanguageModel", { selectedLanguageModel: absurd }],
   ])("keeps an oversized %s under the ceiling", (_name, override) => {
     const url = buildIssueUrl({

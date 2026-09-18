@@ -2,7 +2,6 @@ import { getSubscriptionAccount } from "../services/codex_subscription_account";
 import { createTypedHandler } from "./base";
 import { settingsContracts } from "../types/settings";
 import { writeSettings, readEffectiveSettings } from "../../main/settings";
-import { validateProviderApiKey } from "../services/provider_api_key_validation_service";
 import {
   connectCodexSubscription,
   disconnectCodexSubscription,
@@ -36,11 +35,4 @@ export function registerSettingsHandlers() {
     writeSettings(settings);
     return readEffectiveSettings();
   });
-
-  createTypedHandler(
-    settingsContracts.validateProviderApiKey,
-    async (_, params) => {
-      return validateProviderApiKey(params);
-    },
-  );
 }

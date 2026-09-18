@@ -12,7 +12,6 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStore } from "jotai";
 import { useTranslation } from "react-i18next";
-import { usePostHog } from "posthog-js/react";
 import { ipc } from "@/ipc/types";
 import { generateCuteAppName } from "@/lib/utils";
 import { NEON_TEMPLATE_IDS } from "@/shared/templates";
@@ -106,7 +105,6 @@ export function FirstPromptProvider({
   });
   const queryClient = useQueryClient();
   const { t } = useTranslation("home");
-  const posthog = usePostHog();
   const { settings, envVars } = useSettings();
   const { refreshApps } = useLoadApps();
   const { selectChat } = useSelectChat();
@@ -188,13 +186,6 @@ export function FirstPromptProvider({
         onAccepted,
         onAcceptanceRejected,
       });
-      posthog.capture("home:chat-submit", {
-        existingApp: payload.selectedApp !== undefined,
-      });
-      posthog.capture("chat:home_submit", {
-        chatMode: payload.chatMode,
-        existingApp: payload.selectedApp !== undefined,
-      });
     },
     async refreshQueries(appId) {
       await refreshApps();
@@ -209,7 +200,6 @@ export function FirstPromptProvider({
       selectChat({ appId, chatId });
     },
     showSetupDialog() {
-      posthog.capture("home:ai-setup-dialog-open");
       setIsSetupDialogOpen(true);
     },
     clearEditingBuffer(payload) {

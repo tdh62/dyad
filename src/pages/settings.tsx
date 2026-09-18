@@ -4,7 +4,6 @@ import { ProviderSettingsGrid } from "@/components/ProviderSettings";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { ipc } from "@/ipc/types";
 import { showSuccess, showError } from "@/lib/toast";
-import { TelemetrySwitch } from "@/components/TelemetrySwitch";
 import { MaxToolCallStepsSelector } from "@/components/MaxToolCallStepsSelector";
 import { useSettings } from "@/hooks/useSettings";
 import { useAppVersion } from "@/hooks/useAppVersion";
@@ -31,7 +30,6 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
 import { ContextCompactionSwitch } from "@/components/ContextCompactionSwitch";
 import { BlockUnsafeNpmPackagesSwitch } from "@/components/BlockUnsafeNpmPackagesSwitch";
-import { CloudSandboxExperimentSwitch } from "@/components/CloudSandboxExperimentSwitch";
 import { MultiWindowExperimentSwitch } from "@/components/MultiWindowExperimentSwitch";
 import { TestRunInPreviewSwitch } from "@/components/TestRunInPreviewSwitch";
 import { AutoApproveSqlSwitch } from "@/components/AutoApproveSqlSwitch";
@@ -142,26 +140,6 @@ export default function SettingsPage() {
           </SettingsSection>
 
           <SettingsSection
-            id={SECTION_IDS.telemetry}
-            title="Telemetry"
-            description="Anonymous usage data that helps improve Dyad."
-          >
-            <div id={SETTING_IDS.telemetry} className="space-y-1.5">
-              <TelemetrySwitch />
-              <p className={hint}>
-                This records anonymous usage data to improve the product.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-              <span className="font-medium">Telemetry ID</span>
-              <span className="rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 font-mono text-foreground">
-                {settings ? settings.telemetryUserId : "n/a"}
-              </span>
-            </div>
-          </SettingsSection>
-
-          <SettingsSection
             id={SECTION_IDS.integrations}
             title="Integrations"
             description="Link Dyad to the services you deploy and store data with."
@@ -232,10 +210,6 @@ export default function SettingsPage() {
             title="Experiments"
             description="Early features that may not be stable yet. Enable at your own risk."
           >
-            <div id={SETTING_IDS.enableCloudSandbox}>
-              <CloudSandboxExperimentSwitch />
-            </div>
-
             <div id={SETTING_IDS.enableMultiWindow}>
               <MultiWindowExperimentSwitch />
             </div>

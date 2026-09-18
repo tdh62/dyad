@@ -59,21 +59,4 @@ export function registerWindowHandlers() {
   createTypedHandler(systemContracts.getSystemPlatform, async () => {
     return platform();
   });
-
-  createTypedHandler(
-    systemContracts.getInitialLoadTelemetryContext,
-    async () => {
-      const previous = getPreviousSessionAppSize();
-      // Narrowed by the schema rather than copied field by field, so a wrong
-      // field cannot creep in. The app id identifies an app on this machine
-      // only and nothing in the renderer uses it, so it does not cross.
-      const narrowed = previous
-        ? AppSizeTelemetrySchema.safeParse(previous)
-        : null;
-      return {
-        isFirstSession: getInitialLoadIsFirstSession(),
-        previousSessionAppSize: narrowed?.success ? narrowed.data : null,
-      };
-    },
-  );
 }

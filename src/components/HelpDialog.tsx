@@ -15,7 +15,6 @@ import {
 import { ipc } from "@/ipc/types";
 import { type ReactNode, useState, useEffect, useRef } from "react";
 import { useAtom, useAtomValue } from "jotai";
-import { usePostHog } from "posthog-js/react";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { helpDialogAtom } from "@/atoms/helpDialogAtom";
 import { type SessionDebugBundle, type SystemDebugInfo } from "@/ipc/types";
@@ -261,7 +260,6 @@ export function HelpDialog() {
       }))
     : null;
   const { userBudget } = useUserBudgetInfo();
-  const posthog = usePostHog();
   const isDyadProUser = settings?.providerSettings?.["auto"]?.apiKey?.value;
 
   // ---------------------------------------------------------------------------
@@ -403,7 +401,6 @@ export function HelpDialog() {
    */
   const beginReport = (chatId: number | null, source: ReportSource) => {
     reportSource.current = source;
-    posthog.capture("issue-form:opened", { source });
     clearReport();
     blockedReported.current = false;
     setReportOpen(true);
@@ -419,9 +416,6 @@ export function HelpDialog() {
   const reportBlocked = () => {
     if (blockedReported.current) return;
     blockedReported.current = true;
-    posthog.capture("issue-form:blocked", {
-      source: reportSource.current,
-    });
   };
 
   const handleBack = () => {
@@ -617,18 +611,12 @@ export function HelpDialog() {
    */
   const requestScreenshot = () => {
     if (isCapturing) return;
-    posthog.capture("screenshot-prompt:bar-opened", {
-      source: reportSource.current,
-    });
     setAwaitingCapture(true);
     onClose();
   };
 
   /** The bar's way back to the form without a screenshot. */
   const cancelCaptureBar = () => {
-    posthog.capture("screenshot-prompt:bar-cancelled", {
-      source: reportSource.current,
-    });
     setAwaitingCapture(false);
     setHelpDialog({ open: true });
   };
@@ -639,9 +627,6 @@ export function HelpDialog() {
     // The bar renders nothing while this is set, so it stays out of the
     // picture.
     setIsCapturing(true);
-    posthog.capture("screenshot-prompt:capture-attempt", {
-      source: reportSource.current,
-    });
     setTimeout(async () => {
       try {
         const capture = await ipc.system.takeScreenshot();
@@ -657,17 +642,10 @@ export function HelpDialog() {
         discardCapture();
         activeCapture.current = capture.captureId;
         showCapture(capture.captureId);
-        posthog.capture("screenshot-prompt:captured", {
-          source: reportSource.current,
-        });
       } catch (error) {
         const reason =
           error instanceof Error ? error.message : "Failed to take screenshot";
         if (captureToken.current !== token) return;
-        posthog.capture("screenshot-prompt:capture-failed", {
-          source: reportSource.current,
-          failure: classifyCaptureFailure(reason),
-        });
         showError(reason);
         // A failed retake still leaves the earlier capture on the clipboard
         // and in main, so it stays the report's screenshot rather than being
@@ -690,9 +668,6 @@ export function HelpDialog() {
   };
 
   const removeScreenshot = () => {
-    posthog.capture("screenshot-prompt:removed", {
-      source: reportSource.current,
-    });
     discardCapture();
     setScreenshot(null);
     setScreenshotPreview(null);

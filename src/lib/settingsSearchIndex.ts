@@ -3,7 +3,6 @@ export const SECTION_IDS = {
   workflow: "workflow-settings",
   ai: "ai-settings",
   providers: "provider-settings",
-  telemetry: "telemetry",
   integrations: "integrations",
   agentPermissions: "agent-permissions",
   advanced: "advanced",
@@ -26,12 +25,10 @@ export const SETTING_IDS = {
   chatEventNotification: "setting-chat-event-notification",
   maxToolCallSteps: "setting-max-tool-call-steps",
   contextCompaction: "setting-context-compaction",
-  telemetry: "setting-telemetry",
   github: "setting-github",
   vercel: "setting-vercel",
   supabase: "setting-supabase",
   neon: "setting-neon",
-  enableCloudSandbox: "setting-enable-cloud-sandbox",
   autoApproveNonSchemaSql: "setting-auto-approve-non-schema-sql",
   autoApproveSafeMcpTools: "setting-auto-approve-safe-mcp-tools",
   enableSandboxScriptExecution: "setting-enable-sandbox-script-execution",
@@ -257,23 +254,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     sectionLabel: "Model Providers",
   },
 
-  // Telemetry
-  {
-    id: SETTING_IDS.telemetry,
-    label: "Telemetry",
-    description: "Enable or disable anonymous usage data collection",
-    keywords: [
-      "telemetry",
-      "analytics",
-      "usage",
-      "data",
-      "privacy",
-      "tracking",
-    ],
-    sectionId: SECTION_IDS.telemetry,
-    sectionLabel: "Telemetry",
-  },
-
   // Integrations
   {
     id: SETTING_IDS.github,
@@ -416,23 +396,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
       "pro",
       "auto",
       "experiment",
-    ],
-    sectionId: SECTION_IDS.experiments,
-    sectionLabel: "Experiments",
-  },
-  {
-    id: SETTING_IDS.enableCloudSandbox,
-    label: "Enable Cloud Sandbox (Pro)",
-    description:
-      "Run your app on the Cloud for a more secure runtime that uses fewer local system resources",
-    keywords: [
-      "cloud",
-      "sandbox",
-      "runtime",
-      "experiment",
-      "pro",
-      "credits",
-      "secure",
     ],
     sectionId: SECTION_IDS.experiments,
     sectionLabel: "Experiments",

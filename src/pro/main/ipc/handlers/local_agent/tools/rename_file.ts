@@ -14,7 +14,6 @@ import {
   isServerFunction,
   isSharedServerModule,
 } from "../../../../../../supabase_admin/supabase_utils";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import { getFileWriteKey, withLocks } from "@/ipc/utils/lock_utils";
 
 const logger = log.scope("rename_file");
@@ -157,14 +156,6 @@ export const renameFileTool: ToolDefinition<z.infer<typeof renameFileSchema>> =
             logger.warn(
               `Source file for rename does not exist: ${fromFullPath}`,
             );
-          }
-
-          if (didRename) {
-            queueCloudSandboxSnapshotSync({
-              appId: ctx.appId,
-              changedPaths: [toOperationPath],
-              deletedPaths: [fromOperationPath],
-            });
           }
 
           return didRename

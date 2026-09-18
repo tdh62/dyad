@@ -82,20 +82,8 @@ vi.mock("../services/git_service", () => ({
   gitService: { removeFileAndCommit: removeFileAndCommitMock },
 }));
 
-const queueCloudSandboxSnapshotSyncMock = vi.hoisted(() => vi.fn());
 const prepareIsolatedTestDatabaseMock = vi.hoisted(() => vi.fn());
 const broadcastToRegisteredWindowsMock = vi.hoisted(() => vi.fn());
-// Partially mocked: this module is pulled in transitively by the runtime
-// service, so replacing it wholesale breaks whenever an unrelated export is
-// added. Only the snapshot sync needs to be stubbed out here.
-vi.mock("../utils/cloud_sandbox_provider", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../utils/cloud_sandbox_provider")>();
-  return {
-    ...actual,
-    queueCloudSandboxSnapshotSync: queueCloudSandboxSnapshotSyncMock,
-  };
-});
 vi.mock("../services/isolated_test_db", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../services/isolated_test_db")>();
@@ -125,7 +113,6 @@ describe("tests handlers", () => {
     fs.rmSync(TEMP_BASE, { recursive: true, force: true });
     fs.mkdirSync(TEMP_BASE, { recursive: true });
     removeFileAndCommitMock.mockClear();
-    queueCloudSandboxSnapshotSyncMock.mockClear();
     prepareIsolatedTestDatabaseMock.mockReset();
     broadcastToRegisteredWindowsMock.mockClear();
     browserWindowFromWebContentsMock.mockReset();
@@ -525,10 +512,6 @@ describe("tests handlers", () => {
         path: path.join(TEMP_BASE, "app"),
         filepath: "e2e-tests/signup.spec.ts",
         message: "delete test e2e-tests/signup.spec.ts",
-      });
-      expect(queueCloudSandboxSnapshotSyncMock).toHaveBeenCalledWith({
-        appId,
-        deletedPaths: ["e2e-tests/signup.spec.ts"],
       });
     });
 

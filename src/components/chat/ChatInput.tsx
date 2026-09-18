@@ -48,7 +48,6 @@ import {
 
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { useRunApp } from "@/hooks/useRunApp";
-import { usePostHog } from "posthog-js/react";
 import { CodeHighlight } from "./CodeHighlight";
 import { TokenBar } from "./TokenBar";
 
@@ -132,7 +131,6 @@ const showTokenBarAtom = atom(false);
 
 export function ChatInput({ chatId }: { chatId?: number }) {
   const { t } = useTranslation("chat");
-  const posthog = usePostHog();
   const inputValuesById = useAtomValue(chatInputValuesByIdAtom);
   const setInputValuesById = useSetAtom(chatInputValuesByIdAtom);
   const inputValue = chatId ? (inputValuesById.get(chatId) ?? "") : "";
@@ -721,7 +719,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
         }
       },
     });
-    posthog.capture("chat:submit", { chatMode });
   };
 
   const handleCancel = () => {
@@ -779,7 +776,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       `Approving proposal for chatId: ${chatId}, messageId: ${messageId}`,
     );
     setIsApproving(true);
-    posthog.capture("chat:approve");
     try {
       const result = await ipc.proposal.approveProposal({
         chatId,
@@ -789,7 +785,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
         showExtraFilesToast({
           files: result.extraFiles,
           error: result.extraFilesError,
-          posthog,
         });
       }
       for (const warningMessage of result.warningMessages ?? []) {
@@ -821,7 +816,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       `Rejecting proposal for chatId: ${chatId}, messageId: ${messageId}`,
     );
     setIsRejecting(true);
-    posthog.capture("chat:reject");
     try {
       await ipc.proposal.rejectProposal({
         chatId,
@@ -1242,15 +1236,13 @@ function WriteCodeProperlyButton() {
 function RebuildButton() {
   const { t } = useTranslation("chat");
   const { restartApp } = useRunApp();
-  const posthog = usePostHog();
   const selectedAppId = useAtomValue(selectedAppIdAtom);
 
   const onClick = useCallback(async () => {
     if (!selectedAppId) return;
 
-    posthog.capture("action:rebuild");
     await restartApp({ removeNodeModules: true });
-  }, [selectedAppId, posthog, restartApp]);
+  }, [selectedAppId, restartApp]);
 
   return (
     <SuggestionButton
@@ -1265,15 +1257,13 @@ function RebuildButton() {
 function RestartButton() {
   const { t } = useTranslation("chat");
   const { restartApp } = useRunApp();
-  const posthog = usePostHog();
   const selectedAppId = useAtomValue(selectedAppIdAtom);
 
   const onClick = useCallback(async () => {
     if (!selectedAppId) return;
 
-    posthog.capture("action:restart");
     await restartApp();
-  }, [selectedAppId, posthog, restartApp]);
+  }, [selectedAppId, restartApp]);
 
   return (
     <SuggestionButton
@@ -1288,12 +1278,10 @@ function RestartButton() {
 function RefreshButton() {
   const { t } = useTranslation("chat");
   const { refreshAppIframe } = useRunApp();
-  const posthog = usePostHog();
 
   const onClick = useCallback(() => {
-    posthog.capture("action:refresh");
     refreshAppIframe();
-  }, [posthog, refreshAppIframe]);
+  }, [refreshAppIframe]);
 
   return (
     <SuggestionButton

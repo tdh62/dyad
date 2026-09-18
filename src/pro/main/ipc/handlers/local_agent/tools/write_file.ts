@@ -10,7 +10,6 @@ import {
   isServerFunction,
   isSharedServerModule,
 } from "../../../../../../supabase_admin/supabase_utils";
-import { queueCloudSandboxSnapshotSync } from "@/ipc/utils/cloud_sandbox_provider";
 import { withLock, getFileWriteKey } from "@/ipc/utils/lock_utils";
 const logger = log.scope("write_file");
 
@@ -64,10 +63,6 @@ export const writeFileTool: ToolDefinition<z.infer<typeof writeFileSchema>> = {
       // Write file content
       fs.writeFileSync(fullFilePath, args.content);
       logger.log(`Successfully wrote file: ${fullFilePath}`);
-      queueCloudSandboxSnapshotSync({
-        appId: ctx.appId,
-        changedPaths: [operationPath],
-      });
     });
 
     // Deploy Supabase function if applicable

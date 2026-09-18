@@ -69,8 +69,6 @@ const DebugSystemInfoSchema = z.object({
   nodePath: z.string().nullable(),
   /** Electron version */
   electronVersion: z.string(),
-  /** Telemetry ID for cross-referencing server-side logs. Null if user opted out. */
-  telemetryId: z.string().nullable(),
 });
 
 // -- Non-sensitive settings snapshot --

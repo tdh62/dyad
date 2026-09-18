@@ -186,11 +186,8 @@ export {
 export type {
   GetUserSettingsInput,
   GetUserSettingsOutput,
-  ProviderApiKeyValidationProvider,
   SetUserSettingsInput,
   SetUserSettingsOutput,
-  ValidateProviderApiKeyInput,
-  ValidateProviderApiKeyOutput,
 } from "./settings";
 
 // App types
@@ -337,7 +334,6 @@ export type {
   DoesReleaseNoteExistParams,
   UserBudgetInfo,
   SubscriptionStatus,
-  TelemetryEventPayload,
 } from "./system";
 
 // Version types

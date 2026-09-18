@@ -97,7 +97,6 @@ export const PreviewWebContentsView = ({ loading }: { loading: boolean }) => {
     null,
   );
 
-  const isCloudMode = mode === "cloud";
   const zoomLevel = settings?.zoomLevel;
   const isViewActive = !loading && !!appUrl;
 
@@ -108,14 +107,6 @@ export const PreviewWebContentsView = ({ loading }: { loading: boolean }) => {
   useEffect(() => {
     setTestSetupOverlayActive(isViewActive && isTestRunSettingUp);
   }, [isTestRunSettingUp, isViewActive, setTestSetupOverlayActive]);
-
-  const {
-    mutateAsync: createCloudSandboxShareLink,
-    isPending: isCreatingCloudSandboxShareLink,
-  } = useMutation({
-    mutationFn: async ({ appId }: { appId: number }) =>
-      ipc.app.createCloudSandboxShareLink({ appId }),
-  });
 
   const measureBounds = useCallback((): PreviewViewBounds | null => {
     const node = hostRef.current;
@@ -241,12 +232,7 @@ export const PreviewWebContentsView = ({ loading }: { loading: boolean }) => {
   const openPreviewInBrowser = async () => {
     try {
       setPanelError(null);
-      const url = await resolvePreviewBrowserUrl({
-        isCloudMode,
-        selectedAppId,
-        originalUrl,
-        createCloudSandboxShareLink,
-      });
+      const url = await resolvePreviewBrowserUrl({ originalUrl });
       await ipc.system.openExternalUrl(url);
     } catch (error) {
       setPanelError(
@@ -257,9 +243,7 @@ export const PreviewWebContentsView = ({ loading }: { loading: boolean }) => {
     }
   };
 
-  const openBrowserDisabled = isCloudMode
-    ? isCreatingCloudSandboxShareLink
-    : !originalUrl;
+  const openBrowserDisabled = !originalUrl;
 
   // The main process refuses navigation and reloads while a run drives the
   // page, so leaving these enabled makes them read as broken. Restart isn't
@@ -390,7 +374,7 @@ export const PreviewWebContentsView = ({ loading }: { loading: boolean }) => {
                     runAppLifecycleInBackground("restart", restartApp())
                   }
                   disabled={lockedByTestRun}
-                  aria-label={isCloudMode ? "Restart Cloud Sandbox" : "Restart"}
+                  aria-label="Restart"
                   data-testid="preview-native-restart-button"
                   className={PREVIEW_TOOLBAR_BUTTON_CLASSES}
                 />
@@ -401,9 +385,7 @@ export const PreviewWebContentsView = ({ loading }: { loading: boolean }) => {
             <TooltipContent>
               {lockedByTestRun
                 ? "Locked while tests are running — restarting the app would fail the run"
-                : isCloudMode
-                  ? "Restart Cloud Sandbox"
-                  : "Restart App"}
+                : "Restart App"}
             </TooltipContent>
           </Tooltip>
 

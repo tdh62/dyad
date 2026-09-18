@@ -1,7 +1,7 @@
 /**
  * Classified application errors for IPC/main-process code.
- * Use {@link DyadError} with a {@link DyadErrorKind} so telemetry can ignore
- * high-volume, non-actionable failures (see `shouldFilterTelemetryException`).
+ * Use {@link DyadError} with a {@link DyadErrorKind} so failures are classified
+ * consistently for the renderer and for local logs.
  */
 
 export enum DyadErrorKind {
@@ -12,31 +12,12 @@ export enum DyadErrorKind {
   Conflict = "conflict",
   UserCancelled = "user_cancelled",
   RateLimited = "rate_limited",
-  /** Upstream failures; reported to PostHog by default unless you add finer metadata later. */
+  /** Upstream failures coming from a service Dyad talks to. */
   External = "external",
-  /** Bugs, invariant violations, unexpected failures — always reported. */
+  /** Bugs, invariant violations, unexpected failures. */
   Internal = "internal",
-  /** Unclassified; treated as reportable until call sites are migrated. */
+  /** Unclassified. */
   Unknown = "unknown",
-}
-
-const TELEMETRY_FILTERED_KINDS: ReadonlySet<DyadErrorKind> = new Set([
-  DyadErrorKind.Validation,
-  DyadErrorKind.NotFound,
-  DyadErrorKind.Auth,
-  DyadErrorKind.Precondition,
-  DyadErrorKind.Conflict,
-  DyadErrorKind.UserCancelled,
-  DyadErrorKind.RateLimited,
-]);
-
-/**
- * Returns true if this kind should not be sent to PostHog as an `$exception` event.
- */
-export function isDyadErrorKindFilteredFromTelemetry(
-  kind: DyadErrorKind,
-): boolean {
-  return TELEMETRY_FILTERED_KINDS.has(kind);
 }
 
 export class DyadError extends Error {

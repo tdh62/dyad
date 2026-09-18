@@ -1,26 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "@tanstack/react-router";
-import {
-  CircleCheck,
-  ChevronRight,
-  GiftIcon,
-  Play,
-  Settings,
-} from "lucide-react";
+import { CircleCheck, ChevronRight, Play, Settings } from "lucide-react";
 import { useFirstPromptSaga } from "@/first_prompt/FirstPromptProvider";
-import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
 import { SECTION_IDS } from "@/lib/settingsSearchIndex";
-
-import SetupProviderCard from "@/components/SetupProviderCard";
 
 import { ipc } from "@/ipc/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { usePostHog } from "posthog-js/react";
 import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useScrollAndNavigateTo } from "@/hooks/useScrollAndNavigateTo";
-// @ts-ignore
-import openrouterLogo from "../../assets/ai-logos/openrouter-logo.png";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSubscriptionAccount } from "@/hooks/useSubscriptionAccount";
 import { useSettings } from "@/hooks/useSettings";
@@ -36,8 +23,6 @@ export function SetupBanner({
   forceShow?: boolean;
 }) {
   const { t } = useTranslation("home");
-  const posthog = usePostHog();
-  const navigate = useNavigate();
   const client = useQueryClient();
   const subscription = useSubscriptionAccount();
   const { settings } = useSettings();
@@ -64,19 +49,10 @@ export function SetupBanner({
   });
 
   const handleSubscriptionSetupClick = () => {
-    posthog.capture("setup-flow:ai-provider-setup:chatgpt:click");
     connection.mutate(false);
   };
 
-  const handleOpenRouterSetupClick = () => {
-    posthog.capture("setup-flow:ai-provider-setup:openrouter:click");
-    navigate({
-      to: providerSettingsRoute.id,
-      params: { provider: "openrouter" },
-    });
-  };
   const handleOtherProvidersClick = () => {
-    posthog.capture("setup-flow:ai-provider-setup:other:click");
     settingsScrollAndNavigateTo(SECTION_IDS.providers);
   };
 
@@ -136,19 +112,7 @@ export function SetupBanner({
           <p className="mb-2 text-sm font-medium text-muted-foreground">
             Use your own subscription or API key
           </p>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <ProviderOptionButton
-              label="OpenRouter"
-              chip="Free"
-              onClick={handleOpenRouterSetupClick}
-              icon={
-                <img
-                  src={openrouterLogo}
-                  alt="OpenRouter"
-                  className="size-4 dark:invert"
-                />
-              }
-            />
+          <div className="grid gap-2 sm:grid-cols-2">
             <ProviderOptionButton
               label="ChatGPT subscription"
               chip={
@@ -271,40 +235,3 @@ function ProviderOptionButton({
     </button>
   );
 }
-
-export const OpenRouterSetupBanner = ({
-  className,
-}: {
-  className?: string;
-}) => {
-  const posthog = usePostHog();
-  const navigate = useNavigate();
-  return (
-    <SetupProviderCard
-      className={cn("mt-2", className)}
-      variant="openrouter"
-      onClick={() => {
-        posthog.capture("setup-flow:ai-provider-setup:openrouter:click");
-        navigate({
-          to: providerSettingsRoute.id,
-          params: { provider: "openrouter" },
-        });
-      }}
-      tabIndex={0}
-      leadingIcon={
-        <img
-          src={openrouterLogo}
-          alt="OpenRouter"
-          className="w-4 h-4 dark:invert"
-        />
-      }
-      title="Setup OpenRouter API Key"
-      chip={
-        <>
-          <GiftIcon className="w-3 h-3" />
-          Free models available
-        </>
-      }
-    />
-  );
-};

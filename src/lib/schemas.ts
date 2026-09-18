@@ -1,8 +1,4 @@
 import { z } from "zod";
-import {
-  isGoogleProviderSetup,
-  isNonGoogleProviderSetup,
-} from "./providerUtils";
 
 export const SecretSchema = z.object({
   value: z.string(),
@@ -64,24 +60,10 @@ export type AppSearchResult = z.infer<typeof AppSearchResultSchema>;
 
 export const AppSearchResultsSchema = z.array(AppSearchResultSchema);
 
-const providers = [
-  "openai",
-  "anthropic",
-  "google",
-  "vertex",
-  "auto",
-  "openrouter",
-  "ollama",
-  "lmstudio",
-  "azure",
-  "xai",
-  "bedrock",
-  "minimax",
-] as const;
+// 内网 / 离线版本：内置云端渠道已全部移除，只剩本地供应商。
+const providers = ["ollama", "lmstudio"] as const;
 
-export const cloudProviders = providers.filter(
-  (provider) => provider !== "ollama" && provider !== "lmstudio",
-);
+export const localProviders: readonly string[] = providers;
 
 /**
  * Zod schema for large language model configuration
@@ -156,8 +138,20 @@ export type VertexProviderSetting = z.infer<typeof VertexProviderSettingSchema>;
 export const RuntimeModeSchema = z.enum(["web-sandbox", "local-node", "unset"]);
 export type RuntimeMode = z.infer<typeof RuntimeModeSchema>;
 
-export const RuntimeMode2Schema = z.enum(["host", "docker", "cloud"]);
+export const RuntimeMode2Schema = z.enum(["host", "docker"]);
 export type RuntimeMode2 = z.infer<typeof RuntimeMode2Schema>;
+
+/**
+ * Stored variant of `RuntimeMode2Schema`. `"cloud"` is accepted here only so
+ * settings files written by builds that still had the Cloud Sandbox runtime
+ * mode keep parsing; it is migrated to `"host"` when settings are read.
+ */
+export const StoredRuntimeMode2Schema = z.enum([
+  "host",
+  "docker",
+  "cloud", // DEPRECATED: Cloud Sandbox was removed
+]);
+export type StoredRuntimeMode2 = z.infer<typeof StoredRuntimeMode2Schema>;
 
 /**
  * Chat modes that can be stored in settings (includes deprecated values for backwards compat)
@@ -336,7 +330,6 @@ export type Neon = z.infer<typeof NeonSchema>;
 // It's hard to turn experiments on by default when you put them in
 // ExperimentsSchema.
 export const ExperimentsSchema = z.object({
-  enableCloudSandbox: z.boolean().optional(),
   //////////////////////////////////////////////////////////////////////////////
   // Deprecated experiments
   //////////////////////////////////////////////////////////////////////////////
@@ -494,8 +487,6 @@ const BaseUserSettingsFields = {
   supabase: SupabaseSchema.optional(),
   neon: NeonSchema.optional(),
   autoApproveChanges: z.boolean().optional(),
-  telemetryConsent: z.enum(["opted_in", "opted_out", "unset"]).optional(),
-  telemetryUserId: z.string().optional(),
   hasRunBefore: z.boolean().optional(),
   // Global across chats. Unset prefers a connected subscription.
   proModelUsage: z.enum(["subscription", "pro"]).optional(),
@@ -582,6 +573,8 @@ const BaseUserSettingsFields = {
 export const StoredUserSettingsSchema = z
   .object({
     ...BaseUserSettingsFields,
+    // Allows the removed "cloud" runtime mode through; migrated on read.
+    runtimeMode2: StoredRuntimeMode2Schema.optional(),
     // Deprecated: effort is now selected per model.
     thinkingBudget: z.enum(["low", "medium", "high"]).optional(),
     // Use StoredChatModeSchema to allow deprecated "agent" value
@@ -662,6 +655,9 @@ export function migrateStoredSettings(
 
   return {
     ...activeSettings,
+    // Cloud Sandbox was removed; anything pinned to it falls back to Local.
+    runtimeMode2:
+      stored.runtimeMode2 === "cloud" ? "host" : stored.runtimeMode2,
     selectedChatMode: migrateStoredChatMode(stored.selectedChatMode),
     defaultChatMode: migrateStoredChatMode(stored.defaultChatMode),
     enableChatEventNotifications:
@@ -701,28 +697,21 @@ export function shouldShowPnpmMinimumReleaseAgeWarning(
 }
 
 /**
- * Gets the effective default chat mode based on settings and Pro status.
+ * Gets the effective default chat mode based on settings.
  * - Explicit non-Agent defaults are always honored
- * - Pro users default to Agent
- * - Non-Pro users default to Basic Agent; quota is enforced when sending
- * - Google-only users fall back to Build because free Gemini keys commonly
- *   have limits that are too restrictive for Agent mode
+ * - Everything else defaults to Agent
+ *
+ * 内网 / 离线版本：内置云端渠道已移除，因此不再需要按供应商（例如仅有
+ * Google 免费 key）回退到 Build 的判定。
  */
 export function getEffectiveDefaultChatMode(
   settings: UserSettings,
-  envVars: Record<string, string | undefined>,
+  _envVars: Record<string, string | undefined>,
 ): ChatMode {
-  const isPro = isDyadProEnabled(settings);
-  const hasGoogleProviderSetup = isGoogleProviderSetup(settings, envVars);
-  const hasNonGoogleProviderSetup = isNonGoogleProviderSetup(settings, envVars);
-
   if (settings.defaultChatMode && settings.defaultChatMode !== "local-agent") {
     return settings.defaultChatMode;
   }
 
-  if (isPro) return "local-agent";
-  if (settings.defaultChatMode === "local-agent") return "local-agent";
-  if (hasGoogleProviderSetup && !hasNonGoogleProviderSetup) return "build";
   return "local-agent";
 }
 

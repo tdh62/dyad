@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from "react";
 import { useShortcut } from "./useShortcut";
-import { usePostHog } from "posthog-js/react";
 import {
   ChatModeSchema,
   isDyadProEnabled,
@@ -47,7 +46,6 @@ export function useChatModeToggle() {
   const setHasManuallySelectedChatMode = useSetAtom(
     hasManuallySelectedChatModeAtom,
   );
-  const posthog = usePostHog();
 
   // Detect if user is on mac
   const isMac = useIsMac();
@@ -77,11 +75,6 @@ export function useChatModeToggle() {
       setHasManuallySelectedChatMode(true);
     }
     void setChatMode(newMode).catch(() => {});
-    posthog.capture("chat:mode_toggle", {
-      from: currentMode,
-      to: newMode,
-      trigger: "keyboard_shortcut",
-    });
   }, [
     selectedMode,
     setChatMode,
@@ -90,7 +83,6 @@ export function useChatModeToggle() {
     isQuotaExceeded,
     routeChatId,
     setHasManuallySelectedChatMode,
-    posthog,
   ]);
 
   // Add keyboard shortcut with memoized modifiers

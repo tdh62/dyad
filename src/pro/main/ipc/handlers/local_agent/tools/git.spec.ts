@@ -70,13 +70,6 @@ vi.mock(
   }),
 );
 
-vi.mock("@/ipc/utils/cloud_sandbox_provider", async (importOriginal) => ({
-  ...(await importOriginal<
-    typeof import("@/ipc/utils/cloud_sandbox_provider")
-  >()),
-  queueCloudSandboxSnapshotSync: vi.fn(),
-}));
-
 vi.mock("@/main/settings", () => ({
   readSettings: vi.fn(() => ({ agentToolConsents: {} })),
   writeSettings: vi.fn(),

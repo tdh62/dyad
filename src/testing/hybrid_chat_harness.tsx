@@ -92,7 +92,6 @@ import { useAppBlueprintEvents } from "@/hooks/useAppBlueprintEvents";
 import { ChatPanel } from "@/components/ChatPanel";
 import { AppList } from "@/components/AppList";
 import { ChatList } from "@/components/ChatList";
-import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { SubscriptionStatusBanner } from "@/components/SubscriptionStatusBanner";
 import { VersionPreviewProvider } from "@/version_preview/VersionPreviewProvider";
 import { PreviewIframeProvider } from "@/preview_iframe/PreviewIframeProvider";
@@ -780,7 +779,6 @@ export async function setupHybridChatHarness(
               {opts.withTitleBar && <TitleBar />}
               {opts.withAppList && <AppList show />}
               {opts.withChatList && <ChatList show />}
-              {opts.withPrivacyBanner && <PrivacyBanner />}
               {opts.withSubscriptionStatusBanner && (
                 <SubscriptionStatusBanner />
               )}
