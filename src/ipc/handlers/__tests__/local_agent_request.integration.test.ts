@@ -98,8 +98,6 @@ describe("local-agent default request (integration)", () => {
       "delete_file",
       "enable_nitro",
       "execute_sandbox_script",
-      "explore_chat_history",
-      "generate_image",
       "git_diff",
       "git_log",
       "git_restore_file",
@@ -120,18 +118,9 @@ describe("local-agent default request (integration)", () => {
       "run_type_checks",
       "search_replace",
       "set_chat_summary",
-      "spawn_agent",
       "update_todos",
-      "web_crawl",
-      "web_fetch",
-      "web_search",
       "write_file",
     ]);
-    const spawnAgent = tools.find(
-      (tool) => (tool.function?.name ?? tool.name) === "spawn_agent",
-    );
-    expect(JSON.stringify(spawnAgent)).toContain('"explorer"');
-    expect(JSON.stringify(spawnAgent)).toContain('"implementer"');
     // Tool descriptions are masked by the harness, keeping the payload
     // snapshot-stable.
     for (const t of tools) {

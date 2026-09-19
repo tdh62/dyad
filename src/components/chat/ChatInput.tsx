@@ -87,7 +87,6 @@ import {
 import { ChatImageGenerationStrip } from "./ChatImageGenerationStrip";
 import { dismissedImageGenerationJobIdsAtom } from "@/atoms/imageGenerationAtoms";
 import { useChatImageGenerationJobs } from "@/image_generation/hooks";
-import { ImageGeneratorDialog } from "@/components/ImageGeneratorDialog";
 import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { VisualEditingChangesDialog } from "@/components/preview_panel/VisualEditingChangesDialog";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
@@ -244,11 +243,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const { navigate } = useRouter();
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const { invalidateChats } = useChats(appId);
-  const [imageGeneratorOpen, setImageGeneratorOpen] = useState(false);
-  const handleOpenImageGenerator = useCallback(() => {
-    setImageGeneratorOpen(true);
-  }, []);
-
   // Image generation jobs for auto-adding to chat on send
   const chatImageJobs = useChatImageGenerationJobs();
   const [dismissedImageJobIds, setDismissedImageJobIds] = useAtom(
@@ -1025,9 +1019,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           />
 
           {/* Chat image generation strip */}
-          <ChatImageGenerationStrip
-            onGenerateImage={handleOpenImageGenerator}
-          />
+          <ChatImageGenerationStrip />
 
           {/* Use the DragDropOverlay component */}
           <DragDropOverlay isDraggingOver={isDraggingOver} />
@@ -1116,21 +1108,12 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               showTokenBar={showTokenBar}
               toggleShowTokenBar={toggleShowTokenBar}
               appId={appId ?? undefined}
-              onGenerateImage={handleOpenImageGenerator}
             />
           </div>
           {/* TokenBar is only displayed when showTokenBar is true */}
           {showTokenBar && <TokenBar chatId={chatId} />}
         </div>
       </div>
-
-      {/* Image Generator Dialog */}
-      <ImageGeneratorDialog
-        open={imageGeneratorOpen}
-        onOpenChange={setImageGeneratorOpen}
-        defaultAppId={appId ?? undefined}
-        source="chat"
-      />
     </>
   );
 }

@@ -10,7 +10,7 @@ import { ImageLightbox } from "./ImageLightbox";
 import type { ImageGenerationJobView } from "@/image_generation/state";
 
 interface ChatImageGenerationStripProps {
-  onGenerateImage: () => void;
+  onGenerateImage?: () => void;
 }
 
 export function ChatImageGenerationStrip({
@@ -183,17 +183,19 @@ export function ChatImageGenerationStrip({
             )}
           </div>
         ))}
-        <button
-          onClick={onGenerateImage}
-          className="group flex items-center justify-center w-12 h-12 shrink-0 cursor-pointer"
-          aria-label="Generate another image"
-          title="Generate another image"
-        >
-          <Plus
-            size={18}
-            className="text-muted-foreground group-hover:text-foreground transition-colors"
-          />
-        </button>
+        {onGenerateImage && (
+          <button
+            onClick={onGenerateImage}
+            className="group flex items-center justify-center w-12 h-12 shrink-0 cursor-pointer"
+            aria-label="Generate another image"
+            title="Generate another image"
+          >
+            <Plus
+              size={18}
+              className="text-muted-foreground group-hover:text-foreground transition-colors"
+            />
+          </button>
+        )}
       </div>
 
       {lightboxJob?.result && (

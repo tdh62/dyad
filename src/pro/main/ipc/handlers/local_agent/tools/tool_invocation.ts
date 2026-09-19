@@ -46,7 +46,6 @@ export const FILE_MUTATION_POLICIES = {
   execute_sql: "tool",
   add_integration: "tool",
   enable_nitro: "always",
-  generate_image: "never",
   generate_test_assertions: "always",
   git_restore_file: "always",
   reinstall_and_restart_app: "never",

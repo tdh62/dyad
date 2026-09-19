@@ -6,12 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  BookOpenIcon,
-  BugIcon,
-  ChevronLeftIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { BookOpenIcon, BugIcon, ChevronLeftIcon } from "lucide-react";
 import { ipc } from "@/ipc/types";
 import { type ReactNode, useState, useEffect, useRef } from "react";
 import { useAtom, useAtomValue } from "jotai";
@@ -21,7 +16,6 @@ import { type SessionDebugBundle, type SystemDebugInfo } from "@/ipc/types";
 import { showError } from "@/lib/toast";
 import { SCREENSHOT_ERRORS } from "@/ipc/types/system";
 import { useTranslation } from "react-i18next";
-import { HelpBotDialog } from "./HelpBotDialog";
 import { useSettings } from "@/hooks/useSettings";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -159,7 +153,6 @@ export function HelpDialog() {
 
   const [screen, setScreen] = useState<DialogScreen>("main");
   const [direction, setDirection] = useState(0);
-  const [isHelpBotOpen, setIsHelpBotOpen] = useState(false);
 
   // The report being written. `reportOpen` keeps the draft alive while the
   // dialog is closed for a screenshot.
@@ -846,26 +839,13 @@ export function HelpDialog() {
       </DialogHeader>
       <DialogDescription>{t("home:help.helpOptions")}</DialogDescription>
       <div className="flex flex-col w-full mt-4 space-y-5">
-        {isDyadProUser ? (
-          <Button
-            variant="default"
-            onClick={() => setIsHelpBotOpen(true)}
-            className="w-full py-6 border-primary/50 shadow-sm shadow-primary/10 transition-all hover:shadow-md hover:shadow-primary/15"
-          >
-            <SparklesIcon className="mr-2 h-5 w-5" /> Chat with Dyad help bot
-            (Pro)
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            onClick={() =>
-              ipc.system.openExternalUrl("https://www.dyad.sh/docs")
-            }
-            className="w-full py-6 bg-(--background-lightest)"
-          >
-            <BookOpenIcon className="mr-2 h-5 w-5" /> {t("home:help.openDocs")}
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          onClick={() => ipc.system.openExternalUrl("https://www.dyad.sh/docs")}
+          className="w-full py-6 bg-(--background-lightest)"
+        >
+          <BookOpenIcon className="mr-2 h-5 w-5" /> {t("home:help.openDocs")}
+        </Button>
 
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
@@ -1018,10 +998,6 @@ export function HelpDialog() {
           </AnimatePresence>
         </DialogContent>
       </Dialog>
-      <HelpBotDialog
-        isOpen={isHelpBotOpen}
-        onClose={() => setIsHelpBotOpen(false)}
-      />
     </>
   );
 }

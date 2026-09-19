@@ -804,9 +804,9 @@ export const constructSystemPrompt = ({
    */
   codeExplorerAvailable?: boolean;
   /**
-   * If true, the local-agent prompt routes broad historical recall through
-   * the Pro-only `explore_chat_history` sub-agent instead of direct
-   * `search_chats`.
+   * If true, the local-agent prompt routes broad historical recall through a
+   * dedicated history-explorer tool instead of direct `search_chats`. The
+   * engine-backed explorer was removed in this build, so callers pass false.
    */
   historyExplorerAvailable?: boolean;
   /** If true, include root-Agent guidance for delegating scoped edits. */

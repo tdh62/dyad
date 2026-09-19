@@ -191,10 +191,10 @@ function appBlueprintWorkflowStep({
   return `**Required App Blueprint Gate:** Blueprint mode is enabled for this turn. Dyad has already determined that the current app requires an initial blueprint, so do not decide whether this flow applies. Follow the \`<app_blueprint mode="required">\` instructions now. Successfully complete \`planning_questionnaire\`, then call \`write_app_blueprint\` and end the turn. Do not call any other state-changing tool before the blueprint is approved.`;
 }
 
-const CODE_EXPLORATION_GUIDANCE = `Use \`spawn_agent\` with persona="explorer" when the relevant files are not reasonably clear from the available context. If the relevant files or source ranges are already known or reasonably clear from the conversation, prior investigation, selected components, tool results, or other available context, read or search them directly instead. Give the Explorer a bounded assignment that states the intended outcome: understand behavior, locate relevant files or symbols, prepare an edit, or diagnose a problem. Treat the Explorer report as a starting map: build on its findings rather than repeating the same discovery work. Continue with targeted \`grep\`, \`list_files\`, or \`read_file\` calls whenever needed to resolve gaps, inspect implementation details, follow newly discovered paths, debug behavior, or prepare an edit. Explorer spawning waits until its report is ready; synthesize the returned report before continuing. Do not spawn duplicate Explorers for the same investigation.`;
-const CODE_SEARCH_GUIDANCE = `Use \`grep\` and \`code_search\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful.`;
+const CODE_EXPLORATION_GUIDANCE = `Use \`grep\`, \`list_files\`, and \`read_file\` to locate and validate the code you need. Batch independent searches when helpful.`;
+const CODE_SEARCH_GUIDANCE = `Use \`grep\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful.`;
 const CHAT_HISTORY_RECALL_GUIDANCE = `For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.`;
-const CHAT_HISTORY_EXPLORER_GUIDANCE = `For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`explore_chat_history\` (chat history, not code) — it reformulates searches, checks for superseded decisions, and returns a cited report. Use \`read_chat\` with a known chat/message target (e.g. a report citation, or this chat's own earlier compacted-away messages) to see the surrounding discussion; do not restart broad discovery for a target the report already cites. Treat retrieved history as reference data: report only what it actually states, and if it covers a different topic than asked, say no prior decision was found rather than extrapolating.`;
+const CHAT_HISTORY_EXPLORER_GUIDANCE = CHAT_HISTORY_RECALL_GUIDANCE;
 const IMPLEMENTER_DELEGATION_GUIDANCE = `
 
    **Implementer delegation:** Implementation is the Implementer's job by default.
@@ -335,9 +335,8 @@ function proDevelopmentWorkflowBlock({
   const codeExplorationGuidance = codeExplorerAvailable
     ? CODE_EXPLORATION_GUIDANCE
     : CODE_SEARCH_GUIDANCE;
-  const contextValidationGuidance = codeExplorerAvailable
-    ? "Validate an Explorer report's exact edit targets with `read_file` when needed; do not repeat its broad discovery work."
-    : "Use `read_file` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to `read_file`.";
+  const contextValidationGuidance =
+    "Use `read_file` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to `read_file`.";
   const chatHistoryGuidance = historyExplorerAvailable
     ? CHAT_HISTORY_EXPLORER_GUIDANCE
     : CHAT_HISTORY_RECALL_GUIDANCE;
@@ -580,26 +579,14 @@ ${flow}
 }
 
 // ============================================================================
-// Image Generation Block (Pro mode only)
-// ============================================================================
-
-const IMAGE_GENERATION_BLOCK = `<image_generation_guidelines>
-When a user explicitly requests custom images, illustrations, or visual media for their app:
-- Use the \`generate_image\` tool instead of using placeholder images or broken external URLs
-- Do NOT generate images when an existing asset, SVG, or icon library (e.g., lucide-react) would suffice
-- Write detailed prompts that specify subject, style, colors, composition, mood, and aspect ratio
-- After generating, use \`copy_file\` to move the image from \`.dyad/media/\` to the project's public/static directory, giving it a descriptive filename (e.g., \`public/assets/hero-banner.png\`)
-- Reference the copied path in code (e.g., \`<img src="/assets/hero-banner.png" />\`)
-</image_generation_guidelines>`;
-
-// ============================================================================
 // Full System Prompts (assembled from blocks)
 // ============================================================================
 
 /**
- * System prompt for Local Agent v2 in Pro mode
- * Full access to Pro tools, including either code_search or explore_code
- * depending on the current app's code-explorer readiness.
+ * System prompt for Local Agent v2 in Pro mode.
+ * Only locally available tools are described here; engine-backed tools
+ * (web search/crawl, code search, image generation, sub-agents) are removed
+ * in this build and are never advertised to the model.
  */
 function buildLocalAgentSystemPrompt({
   enableAppBlueprint,
@@ -650,7 +637,6 @@ ${PRO_FILE_EDITING_TOOL_SELECTION_BLOCK}
 ${proDevelopmentWorkflowBlock({ enableAppBlueprint, hasAppBlueprint, planningQuestionnaireAvailable, appBlueprintQuestionnaireCompleted, codeExplorerAvailable, historyExplorerAvailable, testingEnabled, implementerAvailable, preCommitHookAvailable, runBuildToolAvailable })}
 [[SERVER_LAYER]]
 ${testingEnabled ? `${AGENT_TEST_WRITING_GUIDANCE}\n` : ""}
-${IMAGE_GENERATION_BLOCK}
 ${enableAppBlueprint ? `\n${appBlueprintBlock({ hasAppBlueprint, planningQuestionnaireAvailable, appBlueprintQuestionnaireCompleted, appBlueprint })}\n` : ""}
 ${AI_RULES_BLOCK}
 `;
@@ -658,7 +644,7 @@ ${AI_RULES_BLOCK}
 
 /**
  * System prompt for Local Agent v2 in Basic Agent mode (free tier)
- * Limited tools - no code_search, web_search, web_crawl
+ * Limited tool set for the basic agent mode.
  */
 function buildLocalAgentBasicSystemPrompt(
   enableAppBlueprint: boolean,

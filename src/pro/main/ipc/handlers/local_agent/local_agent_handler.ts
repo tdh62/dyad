@@ -487,12 +487,9 @@ function injectReferencedAppsReminder(
   },
 ): void {
   const list = referencedApps.map(({ appName }) => `\`${appName}\``).join(", ");
-  const referencedAppToolNames = [
-    "read_file",
-    "list_files",
-    "grep",
-    "code_search",
-  ].filter((toolName) => options.registeredToolNames.has(toolName));
+  const referencedAppToolNames = ["read_file", "list_files", "grep"].filter(
+    (toolName) => options.registeredToolNames.has(toolName),
+  );
   const toolGuidance = referencedAppToolNames
     .map((toolName) => `\`${toolName}\``)
     .join(", ");

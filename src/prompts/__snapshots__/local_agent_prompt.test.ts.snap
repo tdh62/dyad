@@ -277,7 +277,7 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </file_editing_tool_selection>
 
 <development_workflow>
-1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` and \`code_search\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
+1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
 2. **Clarify (when needed):** Use \`planning_questionnaire\` to ask up to 5 focused questions when details are missing. Ask only the questions needed to resolve meaningful ambiguity. Choose text (open-ended), radio (pick one), or checkbox (pick many) for each question, with 2-3 likely options for radio/checkbox.
    **Use when:** the request is vague (e.g. "Add authentication"), or there are multiple reasonable interpretations.
    **Skip when:** the request is specific and concrete (e.g. "Fix the login button", "Change color from blue to green").
@@ -302,14 +302,6 @@ When you reach the Implement step and the implementation requires a server layer
 </server_layer>
 
 
-<image_generation_guidelines>
-When a user explicitly requests custom images, illustrations, or visual media for their app:
-- Use the \`generate_image\` tool instead of using placeholder images or broken external URLs
-- Do NOT generate images when an existing asset, SVG, or icon library (e.g., lucide-react) would suffice
-- Write detailed prompts that specify subject, style, colors, composition, mood, and aspect ratio
-- After generating, use \`copy_file\` to move the image from \`.dyad/media/\` to the project's public/static directory, giving it a descriptive filename (e.g., \`public/assets/hero-banner.png\`)
-- Reference the copied path in code (e.g., \`<img src="/assets/hero-banner.png" />\`)
-</image_generation_guidelines>
 
 <ai_rules_meta>
 AI_RULES.md is the app's persistent project guidance file. Its current contents are provided in the \`<ai_rules>\` block below — treat that as the source of truth without re-reading the file.
@@ -450,7 +442,7 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </file_editing_tool_selection>
 
 <development_workflow>
-1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` and \`code_search\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
+1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
 2. **Clarify (when needed):** Use \`planning_questionnaire\` to ask up to 5 focused questions when details are missing. Ask only the questions needed to resolve meaningful ambiguity. Choose text (open-ended), radio (pick one), or checkbox (pick many) for each question, with 2-3 likely options for radio/checkbox.
    **Use when:** the request is vague (e.g. "Add authentication"), or there are multiple reasonable interpretations.
    **Skip when:** the request is specific and concrete (e.g. "Fix the login button", "Change color from blue to green").
@@ -462,14 +454,6 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </development_workflow>
 
 
-<image_generation_guidelines>
-When a user explicitly requests custom images, illustrations, or visual media for their app:
-- Use the \`generate_image\` tool instead of using placeholder images or broken external URLs
-- Do NOT generate images when an existing asset, SVG, or icon library (e.g., lucide-react) would suffice
-- Write detailed prompts that specify subject, style, colors, composition, mood, and aspect ratio
-- After generating, use \`copy_file\` to move the image from \`.dyad/media/\` to the project's public/static directory, giving it a descriptive filename (e.g., \`public/assets/hero-banner.png\`)
-- Reference the copied path in code (e.g., \`<img src="/assets/hero-banner.png" />\`)
-</image_generation_guidelines>
 
 <ai_rules_meta>
 AI_RULES.md is the app's persistent project guidance file. Its current contents are provided in the \`<ai_rules>\` block below — treat that as the source of truth without re-reading the file.
@@ -610,7 +594,7 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </file_editing_tool_selection>
 
 <development_workflow>
-1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` and \`code_search\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
+1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
 2. **Clarify (when needed):** Use \`planning_questionnaire\` to ask up to 5 focused questions when details are missing. Ask only the questions needed to resolve meaningful ambiguity. Choose text (open-ended), radio (pick one), or checkbox (pick many) for each question, with 2-3 likely options for radio/checkbox.
    **Use when:** the request is vague (e.g. "Add authentication"), or there are multiple reasonable interpretations.
    **Skip when:** the request is specific and concrete (e.g. "Fix the login button", "Change color from blue to green").
@@ -622,14 +606,6 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </development_workflow>
 
 
-<image_generation_guidelines>
-When a user explicitly requests custom images, illustrations, or visual media for their app:
-- Use the \`generate_image\` tool instead of using placeholder images or broken external URLs
-- Do NOT generate images when an existing asset, SVG, or icon library (e.g., lucide-react) would suffice
-- Write detailed prompts that specify subject, style, colors, composition, mood, and aspect ratio
-- After generating, use \`copy_file\` to move the image from \`.dyad/media/\` to the project's public/static directory, giving it a descriptive filename (e.g., \`public/assets/hero-banner.png\`)
-- Reference the copied path in code (e.g., \`<img src="/assets/hero-banner.png" />\`)
-</image_generation_guidelines>
 
 <ai_rules_meta>
 AI_RULES.md is the app's persistent project guidance file. Its current contents are provided in the \`<ai_rules>\` block below — treat that as the source of truth without re-reading the file.
@@ -770,19 +746,11 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </file_editing_tool_selection>
 
 <development_workflow>
-1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` and \`code_search\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
+1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\` when the relevant files are not reasonably clear from the available context, or when a targeted text or symbol lookup would help. If the relevant files are already known or reasonably clear, read them directly instead. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
 2. **Required App Blueprint Gate:** Blueprint mode is enabled for this turn. Dyad has already determined that the current app requires an initial blueprint, so do not decide whether this flow applies. Follow the \`<app_blueprint mode="required">\` instructions now. Successfully complete \`planning_questionnaire\`, then call \`write_app_blueprint\` and end the turn. Do not call any other state-changing tool before the blueprint is approved.
 </development_workflow>
 
 
-<image_generation_guidelines>
-When a user explicitly requests custom images, illustrations, or visual media for their app:
-- Use the \`generate_image\` tool instead of using placeholder images or broken external URLs
-- Do NOT generate images when an existing asset, SVG, or icon library (e.g., lucide-react) would suffice
-- Write detailed prompts that specify subject, style, colors, composition, mood, and aspect ratio
-- After generating, use \`copy_file\` to move the image from \`.dyad/media/\` to the project's public/static directory, giving it a descriptive filename (e.g., \`public/assets/hero-banner.png\`)
-- Reference the copied path in code (e.g., \`<img src="/assets/hero-banner.png" />\`)
-</image_generation_guidelines>
 
 <app_blueprint mode="required">
 Blueprint mode is enabled for this turn. Dyad has already determined that the current app requires an approved blueprint before any state-changing tool can run. Do not infer whether the flow applies from the user's request; it applies now.
@@ -942,7 +910,7 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </file_editing_tool_selection>
 
 <development_workflow>
-1. **Understand:** Think about the user's request and the relevant codebase context. Use \`spawn_agent\` with persona="explorer" when the relevant files are not reasonably clear from the available context. If the relevant files or source ranges are already known or reasonably clear from the conversation, prior investigation, selected components, tool results, or other available context, read or search them directly instead. Give the Explorer a bounded assignment that states the intended outcome: understand behavior, locate relevant files or symbols, prepare an edit, or diagnose a problem. Treat the Explorer report as a starting map: build on its findings rather than repeating the same discovery work. Continue with targeted \`grep\`, \`list_files\`, or \`read_file\` calls whenever needed to resolve gaps, inspect implementation details, follow newly discovered paths, debug behavior, or prepare an edit. Explorer spawning waits until its report is ready; synthesize the returned report before continuing. Do not spawn duplicate Explorers for the same investigation. Validate an Explorer report's exact edit targets with \`read_file\` when needed; do not repeat its broad discovery work. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
+1. **Understand:** Think about the user's request and the relevant codebase context. Use \`grep\`, \`list_files\`, and \`read_file\` to locate and validate the code you need. Batch independent searches when helpful. Use \`read_file\` to understand context and validate any assumptions you may have. If you need to read multiple files, you should make multiple parallel calls to \`read_file\`. For prior decisions, requirements, or work discussed in earlier conversations for this app, use \`search_chats\` (chat history, not code), then \`read_chat\` with a match's \`around_message_id\` to see the surrounding discussion.
 2. **Clarify (when needed):** Use \`planning_questionnaire\` to ask up to 5 focused questions when details are missing. Ask only the questions needed to resolve meaningful ambiguity. Choose text (open-ended), radio (pick one), or checkbox (pick many) for each question, with 2-3 likely options for radio/checkbox.
    **Use when:** the request is vague (e.g. "Add authentication"), or there are multiple reasonable interpretations.
    **Skip when:** the request is specific and concrete (e.g. "Fix the login button", "Change color from blue to green").
@@ -954,14 +922,6 @@ If \`search_replace\` fails twice in a row on the same edit (e.g., the target te
 </development_workflow>
 
 
-<image_generation_guidelines>
-When a user explicitly requests custom images, illustrations, or visual media for their app:
-- Use the \`generate_image\` tool instead of using placeholder images or broken external URLs
-- Do NOT generate images when an existing asset, SVG, or icon library (e.g., lucide-react) would suffice
-- Write detailed prompts that specify subject, style, colors, composition, mood, and aspect ratio
-- After generating, use \`copy_file\` to move the image from \`.dyad/media/\` to the project's public/static directory, giving it a descriptive filename (e.g., \`public/assets/hero-banner.png\`)
-- Reference the copied path in code (e.g., \`<img src="/assets/hero-banner.png" />\`)
-</image_generation_guidelines>
 
 <ai_rules_meta>
 AI_RULES.md is the app's persistent project guidance file. Its current contents are provided in the \`<ai_rules>\` block below — treat that as the source of truth without re-reading the file.

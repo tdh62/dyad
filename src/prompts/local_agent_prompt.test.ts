@@ -93,7 +93,7 @@ describe("local_agent_prompt", () => {
     expect(prompt).toMatchSnapshot();
     expectGitContextGuidance(prompt);
     expect(prompt).toContain(
-      "Use `grep` and `code_search` when the relevant files are not reasonably clear",
+      "Use `grep` when the relevant files are not reasonably clear",
     );
     expect(prompt).not.toContain("search tools extensively");
     expect(prompt).toContain(
@@ -124,20 +124,10 @@ describe("local_agent_prompt", () => {
       codeExplorerAvailable: true,
     });
     expect(prompt).toMatchSnapshot();
-    expect(prompt).toContain('Use `spawn_agent` with persona="explorer"');
     expect(prompt).toContain(
-      "when the relevant files are not reasonably clear",
+      "Use `grep`, `list_files`, and `read_file` to locate and validate the code you need",
     );
-    expect(prompt).toContain("Treat the Explorer report as a starting map");
-    expect(prompt).toContain(
-      "Explorer spawning waits until its report is ready",
-    );
-    expect(prompt).toContain(
-      "Do not spawn duplicate Explorers for the same investigation",
-    );
-    expect(prompt).toContain(
-      "Validate an Explorer report's exact edit targets",
-    );
+    expect(prompt).not.toContain('Use `spawn_agent` with persona="explorer"');
     expect(prompt).not.toContain("Use `grep` and `code_search`");
     expect(prompt).not.toContain(
       "`list_files`, `code_search`, and `read_file`",
@@ -150,7 +140,7 @@ describe("local_agent_prompt", () => {
     });
 
     expect(prompt).not.toContain('spawn_agent` with persona="explorer"');
-    expect(prompt).toContain("Use `grep` and `code_search`");
+    expect(prompt).toContain("Use `grep` when the relevant files");
   });
 
   it("includes Implementer delegation guidance only when available", () => {

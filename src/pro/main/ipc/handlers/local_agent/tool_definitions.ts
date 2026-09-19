@@ -28,10 +28,6 @@ import { addIntegrationTool } from "./tools/add_integration";
 import { enableNitroTool } from "./tools/enable_nitro";
 import { readLogsTool } from "./tools/read_logs";
 import { searchReplaceTool } from "./tools/search_replace";
-import { webSearchTool } from "./tools/web_search";
-import { webCrawlTool } from "./tools/web_crawl";
-import { webFetchTool } from "./tools/web_fetch";
-import { generateImageTool } from "./tools/generate_image";
 import { updateTodosTool } from "./tools/update_todos";
 import { runTypeChecksTool } from "./tools/run_type_checks";
 import { runTestsTool } from "./tools/run_tests";
@@ -43,19 +39,8 @@ import {
   restartAppTool,
 } from "./tools/app_lifecycle";
 import { grepTool } from "./tools/grep";
-import { codeSearchTool } from "./tools/code_search";
-import { exploreChatHistoryTool } from "./tools/explore_chat_history";
 import { searchChatsTool } from "./tools/search_chats";
 import { readChatTool } from "./tools/read_chat";
-import {
-  cancelAgentTool,
-  exploreCodeTool,
-  followupTaskTool,
-  listAgentsTool,
-  sendMessageTool,
-  spawnAgentTool,
-  waitAgentsTool,
-} from "./tools/subagent_tools";
 import { planningQuestionnaireTool } from "./tools/planning_questionnaire";
 import { writePlanTool } from "./tools/write_plan";
 import { exitPlanTool } from "./tools/exit_plan";
@@ -158,17 +143,8 @@ export const TOOL_DEFINITIONS: readonly ToolDefinition[] = [
   gitShowFileTool,
   gitRestoreFileTool,
   grepTool,
-  codeSearchTool,
-  exploreChatHistoryTool,
   searchChatsTool,
   readChatTool,
-  exploreCodeTool,
-  spawnAgentTool,
-  listAgentsTool,
-  waitAgentsTool,
-  cancelAgentTool,
-  sendMessageTool,
-  followupTaskTool,
   getSupabaseProjectInfoTool,
   getNeonProjectInfoTool,
   getDatabaseTableSchemaTool,
@@ -176,10 +152,6 @@ export const TOOL_DEFINITIONS: readonly ToolDefinition[] = [
   addIntegrationTool,
   enableNitroTool,
   readLogsTool,
-  webSearchTool,
-  webCrawlTool,
-  webFetchTool,
-  generateImageTool,
   updateTodosTool,
   runTypeChecksTool,
   runPreCommitTool,
@@ -737,17 +709,6 @@ export function shouldIncludeTool(
     return false;
   }
   if (tool.subagentOnly && !ctx.isDyadPro) {
-    return false;
-  }
-  // search_chats is superseded by the explore_chat_history sub-agent wherever
-  // the explorer is present (Pro): broad recall routes through the explorer
-  // and targeted drill-down through read_chat. When the explorer is filtered
-  // out (non-Pro, free-model mode), direct search remains available so chat
-  // history stays reachable.
-  if (
-    tool.name === "search_chats" &&
-    shouldIncludeTool(exploreChatHistoryTool, ctx, options)
-  ) {
     return false;
   }
   // Skip app blueprint tools when the feature is disabled.

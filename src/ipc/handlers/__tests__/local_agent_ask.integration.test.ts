@@ -185,7 +185,6 @@ describe("local-agent ask mode (integration)", () => {
     // The exact read-only toolset the e2e request snapshot asserted.
     expect(toolNames).toEqual([
       "execute_sandbox_script",
-      "explore_chat_history",
       "git_diff",
       "git_log",
       "git_show_commit",
@@ -199,16 +198,7 @@ describe("local-agent ask mode (integration)", () => {
       "read_logs",
       "run_type_checks",
       "set_chat_summary",
-      "spawn_agent",
-      "web_crawl",
-      "web_fetch",
-      "web_search",
     ]);
-    const spawnAgent = tools.find(
-      (tool) => (tool.function?.name ?? tool.name) === "spawn_agent",
-    );
-    expect(JSON.stringify(spawnAgent)).toContain('"explorer"');
-    expect(JSON.stringify(spawnAgent)).not.toContain('"implementer"');
     // Tool descriptions are masked by the harness, keeping the payload
     // snapshot-stable.
     for (const t of tools) {
@@ -222,7 +212,7 @@ describe("local-agent ask mode (integration)", () => {
     expect([...harness.bridge.missingChannels]).toEqual([]);
   }, 60_000);
 
-  it("provides Explorer spawning without Implementer in Plan mode", async () => {
+  it("omits engine-backed tools in Plan mode", async () => {
     const chatId = await harness.createChat();
 
     harness.mount({ chatId });
@@ -251,23 +241,25 @@ describe("local-agent ask mode (integration)", () => {
       name?: string;
     }>;
     const toolNames = tools.map((tool) => tool.function?.name ?? tool.name);
-    expect(toolNames).toContain("spawn_agent");
     expect(toolNames).not.toContain("write_file");
-    for (const advancedTool of [
+    // Engine-backed tools and sub-agent orchestration are removed in this
+    // build and must never be advertised to the model.
+    for (const removedTool of [
+      "spawn_agent",
       "list_agents",
       "wait_agents",
       "cancel_agent",
       "send_message",
       "followup_task",
+      "explore_chat_history",
+      "code_search",
+      "web_search",
+      "web_crawl",
+      "web_fetch",
+      "generate_image",
     ]) {
-      expect(toolNames).not.toContain(advancedTool);
+      expect(toolNames).not.toContain(removedTool);
     }
-
-    const spawnAgent = tools.find(
-      (tool) => (tool.function?.name ?? tool.name) === "spawn_agent",
-    );
-    expect(JSON.stringify(spawnAgent)).toContain('"explorer"');
-    expect(JSON.stringify(spawnAgent)).not.toContain('"implementer"');
     expect([...harness.bridge.missingChannels]).toEqual([]);
   }, 60_000);
 });
