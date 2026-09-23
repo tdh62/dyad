@@ -438,10 +438,7 @@
       "undo": "실행 취소",
       "redo": "다시 실행",
       "addToChat": "채팅에 추가",
-      "closeAnnotator": "어노테이터 닫기",
-      "proFeatureTitle": "어노테이터는 Pro 기능입니다",
-      "proFeatureDescription": "Dyad Pro로 스크린샷에 주석을 달고 작업 흐름을 개선하는 기능을 잠금 해제하세요.",
-      "getDyadPro": "Dyad Pro 받기"
+      "closeAnnotator": "어노테이터 닫기"
     }
   },
   "integrations": {

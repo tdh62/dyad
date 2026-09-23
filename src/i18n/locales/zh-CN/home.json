@@ -437,10 +437,7 @@
       "undo": "撤销",
       "redo": "重做",
       "addToChat": "添加到聊天",
-      "closeAnnotator": "关闭标注器",
-      "proFeatureTitle": "标注器是 Pro 功能",
-      "proFeatureDescription": "解锁截图标注功能，使用 Dyad Pro 提升您的工作流程。",
-      "getDyadPro": "获取 Dyad Pro"
+      "closeAnnotator": "关闭标注器"
     }
   },
   "integrations": {

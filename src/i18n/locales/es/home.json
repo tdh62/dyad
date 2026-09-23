@@ -441,10 +441,7 @@
       "undo": "Deshacer",
       "redo": "Rehacer",
       "addToChat": "Añadir al Chat",
-      "closeAnnotator": "Cerrar Anotador",
-      "proFeatureTitle": "El Anotador es una Función Pro",
-      "proFeatureDescription": "Desbloquea la capacidad de anotar capturas de pantalla y mejora tu flujo de trabajo con Dyad Pro.",
-      "getDyadPro": "Consigue Dyad Pro"
+      "closeAnnotator": "Cerrar Anotador"
     }
   },
   "integrations": {

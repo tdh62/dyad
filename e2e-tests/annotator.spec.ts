@@ -5,7 +5,9 @@ import fs from "fs";
 testSkipIfWindows(
   "annotator - capture and submit screenshot",
   async ({ po }) => {
-    await po.setUpDyadPro({ autoApprove: true });
+    // The annotator is free: screenshot capture and annotation run entirely
+    // locally, so this must work without a Dyad Pro budget.
+    await po.setUp({ autoApprove: true });
 
     // Create a basic app
     await po.sendPrompt("basic");

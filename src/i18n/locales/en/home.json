@@ -458,10 +458,7 @@
       "undo": "Undo",
       "redo": "Redo",
       "addToChat": "Add to Chat",
-      "closeAnnotator": "Close Annotator",
-      "proFeatureTitle": "Annotator is a Pro Feature",
-      "proFeatureDescription": "Unlock the ability to annotate screenshots and enhance your workflow with Dyad Pro.",
-      "getDyadPro": "Get Dyad Pro"
+      "closeAnnotator": "Close Annotator"
     }
   },
   "integrations": {

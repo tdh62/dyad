@@ -405,10 +405,7 @@
       "undo": "Geri Al",
       "redo": "Yinele",
       "addToChat": "Sohbete Ekle",
-      "closeAnnotator": "Açıklayıcıyı Kapat",
-      "proFeatureTitle": "Açıklayıcı bir Pro Özelliğidir",
-      "proFeatureDescription": "Dyad Pro ile ekran görüntülerine açıklama ekleme yeteneğinin kilidini açın ve iş akışınızı geliştirin.",
-      "getDyadPro": "Dyad Pro'yu Edinin"
+      "closeAnnotator": "Açıklayıcıyı Kapat"
     }
   },
   "integrations": {
