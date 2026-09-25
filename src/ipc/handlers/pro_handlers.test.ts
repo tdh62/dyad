@@ -1,12 +1,9 @@
 // @vitest-environment node
 
 import { describe, expect, it, vi } from "vitest";
-import { configureTrustedRenderer } from "@/ipc/utils/renderer_security";
 
 const mocks = vi.hoisted(() => ({
-  isTestBuild: true,
-  ipcHandlers: new Map<string, (event: unknown, input: unknown) => unknown>(),
-  openExternal: vi.fn(),
+  ipcHandlers: new Map<string, unknown>(),
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -17,16 +14,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("electron", () => ({
   ipcMain: {
-    handle: vi.fn(
-      (
-        channel: string,
-        handler: (event: unknown, input: unknown) => unknown,
-      ) => {
-        mocks.ipcHandlers.set(channel, handler);
-      },
-    ),
+    handle: vi.fn((channel: string, handler: unknown) => {
+      mocks.ipcHandlers.set(channel, handler);
+    }),
   },
-  shell: { openExternal: mocks.openExternal },
 }));
 
 vi.mock("electron-log", () => ({
@@ -38,51 +29,17 @@ vi.mock("../utils/telemetry", () => ({
 }));
 
 vi.mock("../utils/test_utils", () => ({
-  get IS_TEST_BUILD() {
-    return mocks.isTestBuild;
-  },
+  IS_TEST_BUILD: false,
 }));
 
-const { getRegisteredHandlerForTesting } = await import("./base");
-const { parseBillingActionUrl, registerProHandlers } =
-  await import("./pro_handlers");
-
-configureTrustedRenderer({
-  devServerUrl: "http://localhost:5173",
-  packagedRendererUrl: "file:///app/renderer/main_window/index.html",
-});
+const { registerProHandlers } = await import("./pro_handlers");
 registerProHandlers();
 
-const getSubscriptionStatus = getRegisteredHandlerForTesting(
-  "get-subscription-status",
-);
-const openBillingAction = getRegisteredHandlerForTesting("open-billing-action");
-
 describe("offline build cloud handlers", () => {
-  it("returns null for subscription status without contacting the network", async () => {
-    await expect(
-      getSubscriptionStatus({} as never, undefined),
-    ).resolves.toBeNull();
-  });
-
-  it("rejects unsafe billing URLs", () => {
-    for (const url of [
-      "http://academy.dyad.sh/subscription",
-      "https://example.com/subscription",
-      "https://user:pass@academy.dyad.sh/subscription",
-      "https://academy.dyad.sh:8443/subscription",
-      "not a URL",
-    ]) {
-      expect(() => parseBillingActionUrl(url)).toThrow(
-        "Invalid billing action URL",
-      );
-    }
-  });
-
-  it("accepts and opens an Academy HTTPS billing URL", async () => {
-    const url = "https://academy.dyad.sh/subscription?source=app";
-    expect(parseBillingActionUrl(url)).toBe(url);
-    await expect(openBillingAction({} as never, url)).resolves.toBeUndefined();
-    expect(mocks.openExternal).not.toHaveBeenCalled();
+  it("registers only the local user budget handler", () => {
+    expect(mocks.ipcHandlers.has("get-user-budget")).toBe(true);
+    // Dyad-cloud subscription/billing endpoints are removed in this build.
+    expect(mocks.ipcHandlers.has("get-subscription-status")).toBe(false);
+    expect(mocks.ipcHandlers.has("open-billing-action")).toBe(false);
   });
 });

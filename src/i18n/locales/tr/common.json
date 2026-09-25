@@ -59,19 +59,5 @@
   "builtIn": "Yerleşik",
   "advanced": "Gelişmiş",
   "required": "Gerekli",
-  "optional": "İsteğe bağlı",
-  "billingNudge": {
-    "paymentPastDue": "Ödeme başarısız oldu. Dyad Pro'nun etkin kalması için ödeme yönteminizi güncelleyin.",
-    "subscriptionEnding_one": "Dyad Pro aboneliğiniz {{count}} gün içinde bitiyor.",
-    "subscriptionEnding_other": "Dyad Pro aboneliğiniz {{count}} gün içinde bitiyor.",
-    "subscriptionEndingToday": "Dyad Pro aboneliğiniz bugün bitiyor.",
-    "creditsLost_one": "{{credits}} kredi kaybedeceksiniz.",
-    "creditsLost_other": "{{credits}} kredi kaybedeceksiniz.",
-    "subscriptionPaused": "Dyad Pro aboneliğiniz duraklatıldı. Ek kredi almak için aboneliği sürdürün.",
-    "managePaymentMethods": "Ödeme yöntemini güncelle",
-    "manageSubscription": "Aboneliği yönet",
-    "resumeSubscription": "Aboneliği sürdür",
-    "openActionError": "Academy açılamadı. Lütfen tekrar deneyin.",
-    "dismiss": "Faturalandırma bildirimini yoksay"
-  }
+  "optional": "İsteğe bağlı"
 }

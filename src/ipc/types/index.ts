@@ -333,7 +333,6 @@ export type {
   SelectNodeFolderResult,
   DoesReleaseNoteExistParams,
   UserBudgetInfo,
-  SubscriptionStatus,
 } from "./system";
 
 // Version types
@@ -505,7 +504,7 @@ export {
   AgentToolSchema,
 } from "./agent";
 
-export { SubscriptionStatusSchema, UserBudgetInfoSchema } from "./system";
+export { UserBudgetInfoSchema } from "./system";
 
 // =============================================================================
 // Aggregated IPC Client
