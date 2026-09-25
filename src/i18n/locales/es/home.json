@@ -73,14 +73,6 @@
   "communityCodeReview": "Recomendamos revisar el código en GitHub primero. Procede solo si te sientes cómodo con estos riesgos.",
   "deleteItemTitle": "Eliminar {{itemType}}",
   "deleteItemConfirmation": "¿Estás seguro de que quieres eliminar \"{{itemName}}\"? Esta acción no se puede deshacer.",
-  "proBanner": {
-    "manageDyadPro": "Gestionar Dyad Pro",
-    "alreadyHavePro": "¿Ya tienes Dyad Pro? Añade tu clave",
-    "accessLeadingModels": "Accede a los modelos líderes de IA con un solo plan",
-    "getDyadPro": "Consigue Dyad Pro",
-    "upTo3xCheaper": "Hasta 3 veces más barato",
-    "byUsingSmartContext": "al usar Smart Context"
-  },
   "setup": {
     "buildNewApp": "Construir una nueva aplicación",
     "setupDyad": "Configurar Dyad",
@@ -103,8 +95,6 @@
     "notSureWatchVideo": "¿No estás seguro de qué hacer? Mira el video de Primeros Pasos arriba",
     "setupGeminiApiKey": "Configurar Clave API de Google Gemini",
     "setupOpenRouterApiKey": "Configurar Clave API de OpenRouter",
-    "setupDyadPro": "Configurar Dyad Pro",
-    "accessAllModels": "Accede a todos los modelos de IA con un solo plan",
     "setupOtherProviders": "Configurar otros proveedores de IA",
     "openAiAnthropicMore": "OpenAI, Anthropic y más",
     "freeModelsAvailable": "Modelos gratuitos disponibles"

@@ -42,21 +42,7 @@ testSkipIfWindows(
       await po.chatActions.waitForChatCompletion();
     }
 
-    // 5. Verify quota exceeded banner appears with correct content
-    await expect(po.page.getByTestId("free-agent-quota-banner")).toBeVisible({
-      timeout: Timeout.MEDIUM,
-    });
-    await expect(po.page.getByTestId("free-agent-quota-banner")).toContainText(
-      "You have used all 20 messages for the free Agent mode today",
-    );
-    await expect(
-      po.page.getByRole("button", { name: "Upgrade to Dyad Pro" }),
-    ).toBeVisible();
-    await expect(
-      po.page.getByRole("button", { name: "Switch to Build mode" }),
-    ).toBeVisible();
-
-    // 6. A 21st message stays in Basic Agent and surfaces the quota error
+    // 5. A 21st message stays in Basic Agent and surfaces the quota error
     // instead of silently running through Build mode.
     await po.sendPrompt("tc=local-agent/simple-response message 21");
     const quotaError = po.page.getByTestId("chat-error-box");
@@ -67,7 +53,6 @@ testSkipIfWindows(
       "You have used all 20 free Basic Agent messages for today",
     );
     await expect(quotaError).toContainText("Your quota resets at");
-    await expect(quotaError.getByText("Upgrade to Dyad Pro")).toBeVisible();
     await expect(
       quotaError.getByRole("button", { name: "Switch to Build" }),
     ).toBeVisible();
@@ -92,9 +77,6 @@ testSkipIfWindows(
       "Build",
     );
     await expect(quotaError).not.toBeVisible();
-    await expect(
-      po.page.getByTestId("free-agent-quota-banner"),
-    ).not.toBeVisible();
     await expect(
       po.page
         .getByTestId("messages-list")

@@ -16,7 +16,6 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   SendHorizontalIcon,
-  Lock,
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
@@ -89,7 +88,6 @@ import { dismissedImageGenerationJobIdsAtom } from "@/atoms/imageGenerationAtoms
 import { useChatImageGenerationJobs } from "@/image_generation/hooks";
 import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { VisualEditingChangesDialog } from "@/components/preview_panel/VisualEditingChangesDialog";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import {
@@ -101,7 +99,6 @@ import {
   ContextLimitBanner,
   shouldShowContextLimitBanner,
 } from "./ContextLimitBanner";
-import { PromoMessage, usePromoMessage } from "./PromoMessage";
 import { useCountTokens } from "@/hooks/useCountTokens";
 import { useChats } from "@/hooks/useChats";
 import { useRouter } from "@tanstack/react-router";
@@ -312,7 +309,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       .reverse(); // Most recent first
   }, [messages]);
 
-  const { userBudget } = useUserBudgetInfo();
   const isProEnabled = settings ? isDyadProEnabled(settings) : false;
 
   // Token counting for context limit banner
@@ -328,11 +324,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       totalTokens: tokenCountResult.actualMaxTokens,
       contextWindow: tokenCountResult.contextWindow,
     });
-
-  // Promo cap row on the composer; never stack two caps — the context limit
-  // warning wins the slot.
-  const promo = usePromoMessage(chatId);
-  const showPromo = promo.visible && !showBanner;
 
   useEffect(() => {
     if (error) {
@@ -861,8 +852,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
         </div>
       )}
       <div className="p-2 pt-0" data-testid="chat-input-container">
-        {/* Promo cap row fused to the top of the composer */}
-        {showPromo && <PromoMessage seed={promo.seed} />}
         {/* Show context limit banner above chat input for visibility */}
         {showBanner && tokenCountResult && (
           <ContextLimitBanner
@@ -881,7 +870,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
             "relative flex flex-col border border-border rounded-2xl bg-(--background-lighter) transition-colors duration-200",
             "focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/20",
             isDraggingOver && "ring-2 ring-blue-500 border-blue-500",
-            (showBanner || showPromo || isCancellationRequested) &&
+            (showBanner || isCancellationRequested) &&
               "rounded-t-none border-t-0",
           )}
           onDragOver={handleDragOver}
@@ -961,47 +950,22 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               />
             )}
 
-          {userBudget ? (
-            <VisualEditingChangesDialog
-              iframeRef={
-                previewIframeRef
-                  ? { current: previewIframeRef }
-                  : { current: null }
-              }
-              onReset={() => {
-                // Exit component selection mode and visual editing
-                setSelectedComponents([]);
-                sendPreviewIframeEvent({ type: "PICKER_DEACTIVATED" });
-                setVisualEditingSelectedComponent(null);
-                setCurrentComponentCoordinates(null);
-                setPendingVisualChanges(new Map());
-                refreshAppIframe();
-              }}
-            />
-          ) : (
-            selectedComponents.length > 0 && (
-              <div className="border-b border-border p-3 bg-muted/30">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        onClick={() => {
-                          ipc.system.openExternalUrl("https://dyad.sh/pro");
-                        }}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                      />
-                    }
-                  >
-                    <Lock size={16} />
-                    <span className="font-medium">{t("visualEditor")}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t("visualEditorDescription")}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            )
-          )}
+          <VisualEditingChangesDialog
+            iframeRef={
+              previewIframeRef
+                ? { current: previewIframeRef }
+                : { current: null }
+            }
+            onReset={() => {
+              // Exit component selection mode and visual editing
+              setSelectedComponents([]);
+              sendPreviewIframeEvent({ type: "PICKER_DEACTIVATED" });
+              setVisualEditingSelectedComponent(null);
+              setCurrentComponentCoordinates(null);
+              setPendingVisualChanges(new Map());
+              refreshAppIframe();
+            }}
+          />
 
           <SelectedComponentsDisplay />
 

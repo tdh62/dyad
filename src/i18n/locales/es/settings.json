@@ -302,7 +302,5 @@
     "addProvider": "Añadir Proveedor",
     "updateProvider": "Actualizar Proveedor",
     "failedCreate": "Error al crear el proveedor personalizado"
-  },
-  "manageDyadPro": "Gestionar Suscripción de Dyad Pro",
-  "setupDyadPro": "Configurar Suscripción de Dyad Pro"
+  }
 }

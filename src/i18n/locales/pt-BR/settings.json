@@ -299,7 +299,5 @@
     "addProvider": "Adicionar Provedor",
     "updateProvider": "Atualizar Provedor",
     "failedCreate": "Falha ao criar provedor personalizado"
-  },
-  "manageDyadPro": "Gerenciar Assinatura Dyad Pro",
-  "setupDyadPro": "Configurar Assinatura Dyad Pro"
+  }
 }

@@ -72,14 +72,6 @@
   "communityCodeReview": "Önce kodu GitHub'da incelemenizi öneririz. Yalnızca bu riskleri kabul ediyorsanız devam edin.",
   "deleteItemTitle": "{{itemType}} sil",
   "deleteItemConfirmation": "\"{{itemName}}\" öğesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-  "proBanner": {
-    "manageDyadPro": "Dyad Pro'yu Yönet",
-    "alreadyHavePro": "Dyad Pro'nuz var mı? Anahtarınızı ekleyin",
-    "accessLeadingModels": "Önde gelen AI modellerine tek planla erişin",
-    "getDyadPro": "Dyad Pro'yu Edinin",
-    "upTo3xCheaper": "3 kata kadar daha ucuz",
-    "byUsingSmartContext": "Akıllı Bağlam kullanarak"
-  },
   "setup": {
     "buildNewApp": "Yeni bir uygulama oluştur",
     "setupDyad": "Dyad'ı Kur",
@@ -102,8 +94,6 @@
     "notSureWatchVideo": "Ne yapacağınızdan emin değil misiniz? Yukarıdaki Başlarken videosunu izleyin",
     "setupGeminiApiKey": "Google Gemini API Anahtarını Kur",
     "setupOpenRouterApiKey": "OpenRouter API Anahtarını Kur",
-    "setupDyadPro": "Dyad Pro'yu Kur",
-    "accessAllModels": "Tüm AI modellerine tek planla erişin",
     "setupOtherProviders": "Diğer AI sağlayıcılarını kur",
     "openAiAnthropicMore": "OpenAI, Anthropic ve daha fazlası",
     "freeModelsAvailable": "Ücretsiz modeller mevcut"

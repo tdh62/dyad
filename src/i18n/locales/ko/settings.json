@@ -304,7 +304,5 @@
     "addProvider": "공급자 추가",
     "updateProvider": "공급자 업데이트",
     "failedCreate": "사용자 지정 공급자 생성에 실패했습니다"
-  },
-  "manageDyadPro": "Dyad Pro 구독 관리",
-  "setupDyadPro": "Dyad Pro 구독 설정"
+  }
 }

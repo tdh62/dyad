@@ -16,12 +16,9 @@ import {
   DialogFooter,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { isDyadProEnabled } from "@/lib/schemas";
 
 /** Mounted once, so closing the picker does not interrupt sign-in completion. */
 export function SubscriptionConnectionStatus() {
-  const { settings } = useSettings();
-  const hasPro = settings && isDyadProEnabled(settings);
   const status = useSubscriptionAccount();
   const resumeFirstPrompt = useFirstPromptProviderResume();
   const [resumeRequested, setResumeRequested] = useState(false);
@@ -129,13 +126,6 @@ export function SubscriptionConnectionStatus() {
           {(status.data?.setupError || resumeError) && (
             <p role="alert">{status.data?.setupError ?? resumeError}</p>
           )}
-          {(!settings || hasPro) && (
-            <p>
-              {!settings
-                ? "Checking Dyad Pro status…"
-                : "Uses up to 1.5 Dyad Pro credits / 1 million tokens processed."}
-            </p>
-          )}
         </div>
         <DialogFooter>
           <Button className="w-full" onClick={() => void close()}>
@@ -164,20 +154,6 @@ export function SubscriptionLimitBanner() {
     >
       You've reached a ChatGPT subscription usage limit. Wait for your limit to
       reset or upgrade your ChatGPT subscription tier.
-      {!isDyadProEnabled(settings) && (
-        <>
-          {" "}
-          You can also disconnect ChatGPT in the Subscription menu to use your
-          OpenAI API key.
-        </>
-      )}
-      {isDyadProEnabled(settings) && (
-        <>
-          {" "}
-          You can also select <strong>Pro credits</strong> under{" "}
-          <strong>Model usage</strong> in the Pro menu.
-        </>
-      )}
     </div>
   );
 }

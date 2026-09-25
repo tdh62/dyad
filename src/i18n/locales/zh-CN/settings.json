@@ -299,7 +299,5 @@
     "addProvider": "添加提供商",
     "updateProvider": "更新提供商",
     "failedCreate": "创建自定义提供商失败"
-  },
-  "manageDyadPro": "管理 Dyad Pro 订阅",
-  "setupDyadPro": "设置 Dyad Pro 订阅"
+  }
 }

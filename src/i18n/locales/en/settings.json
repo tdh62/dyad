@@ -304,7 +304,5 @@
     "addProvider": "Add Provider",
     "updateProvider": "Update Provider",
     "failedCreate": "Failed to create custom provider"
-  },
-  "manageDyadPro": "Manage Dyad Pro Subscription",
-  "setupDyadPro": "Setup Dyad Pro Subscription"
+  }
 }

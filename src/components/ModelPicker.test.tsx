@@ -8,10 +8,6 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ModelPicker } from "./ModelPicker";
-vi.mock("./SubscriptionModelMenu", () => ({
-  SubscriptionModelMenu: ({ children }: { children: React.ReactNode }) =>
-    children,
-}));
 vi.mock("@/hooks/useSubscriptionAccount", () => ({
   useSubscriptionAccount: () => ({
     isLoading: mocks.subscriptionLoading,

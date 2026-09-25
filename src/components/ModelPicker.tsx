@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/tooltip";
 import { CheckIcon, ChevronRightIcon, LockIcon } from "lucide-react";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { SubscriptionModelMenu } from "@/components/SubscriptionModelMenu";
 import { useSubscriptionAccount } from "@/hooks/useSubscriptionAccount";
 import { usesChatGPTSubscription } from "@/lib/subscriptionModels";
 import {
@@ -1142,131 +1141,126 @@ export function ModelPicker() {
           <span className="truncate">{modelDisplayName}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={MODEL_MENU_WIDTH_CLASS} align="start">
-          <SubscriptionModelMenu>
-            <DropdownMenuSeparator />
-            <>
-              {/* Recent models come first: the ones a user actually runs stay
+          <DropdownMenuSeparator />
+          <>
+            {/* Recent models come first: the ones a user actually runs stay
                   one click away, and everything else is behind the submenu. */}
-              {recentModelEntries.length > 0 && (
-                <>
-                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Recent
-                  </DropdownMenuLabel>
-                  {recentModelEntries.map((entry) => {
-                    if (entry.type === "cloud") {
-                      return renderCloudModelItem({
-                        providerId: entry.providerId,
-                        model: entry.model,
-                      });
-                    }
-                    if (entry.type === "local") {
-                      return renderLocalModelItem(
-                        entry.providerId,
-                        entry.model,
-                      );
-                    }
-                    return (
-                      <DropdownMenuItem
-                        key={`${entry.providerId}-${entry.modelName}-loading`}
-                        disabled
-                        aria-label={`${entry.modelName}. Loading local model`}
-                        className="py-1.5"
-                      >
-                        <ProviderIcon providerId={entry.providerId} />
-                        <span className="min-w-0 truncate text-[13px]">
-                          {entry.modelName}
-                        </span>
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          Loading...
-                        </span>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                  <DropdownMenuSeparator />
-                </>
-              )}
+            {recentModelEntries.length > 0 && (
+              <>
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Recent
+                </DropdownMenuLabel>
+                {recentModelEntries.map((entry) => {
+                  if (entry.type === "cloud") {
+                    return renderCloudModelItem({
+                      providerId: entry.providerId,
+                      model: entry.model,
+                    });
+                  }
+                  if (entry.type === "local") {
+                    return renderLocalModelItem(entry.providerId, entry.model);
+                  }
+                  return (
+                    <DropdownMenuItem
+                      key={`${entry.providerId}-${entry.modelName}-loading`}
+                      disabled
+                      aria-label={`${entry.modelName}. Loading local model`}
+                      className="py-1.5"
+                    >
+                      <ProviderIcon providerId={entry.providerId} />
+                      <span className="min-w-0 truncate text-[13px]">
+                        {entry.modelName}
+                      </span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        Loading...
+                      </span>
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+              </>
+            )}
 
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger
-                  className="w-full font-normal"
-                  {...NAVIGATION_SUBMENU_HOVER_PROPS}
-                >
-                  <span>All models</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent
-                  className={cn(MODEL_MENU_WIDTH_CLASS, SCROLL_AREA_CLASS)}
-                  data-testid="more-models-submenu"
-                  data-catalog-loading={loading}
-                >
-                  {loading ? (
-                    <div className="text-xs text-center py-2 text-muted-foreground">
-                      Loading cloud models...
-                    </div>
-                  ) : !hasCloudCatalogEntries ? (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      {cloudCatalogError
-                        ? "Couldn’t load cloud models"
-                        : "No cloud models available"}
-                    </div>
-                  ) : (
-                    <>
-                      <div
-                        className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
-                        data-testid="ready-providers-section"
-                      >
-                        Ready to use
-                      </div>
-                      {readyModelEntries.length > 0 ? (
-                        readyModelEntries.map(({ providerId, model }) =>
-                          renderCloudModelItem({ providerId, model }),
-                        )
-                      ) : (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                          Add an API key under Model Providers, or pick a local
-                          model below.
-                        </div>
-                      )}
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <div
-                    className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
-                    data-testid="local-providers-section"
-                  >
-                    Local providers
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger
+                className="w-full font-normal"
+                {...NAVIGATION_SUBMENU_HOVER_PROPS}
+              >
+                <span>All models</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent
+                className={cn(MODEL_MENU_WIDTH_CLASS, SCROLL_AREA_CLASS)}
+                data-testid="more-models-submenu"
+                data-catalog-loading={loading}
+              >
+                {loading ? (
+                  <div className="text-xs text-center py-2 text-muted-foreground">
+                    Loading cloud models...
                   </div>
-                  {renderLocalProviderSubmenu({
-                    providerId: "ollama",
-                    label: "Ollama",
-                    models: ollamaModels,
-                    loading: ollamaLoading,
-                    error: ollamaError,
-                  })}
-                  {renderLocalProviderSubmenu({
-                    providerId: "lmstudio",
-                    label: "LM Studio",
-                    models: lmStudioModels,
-                    loading: lmStudioLoading,
-                    error: lmStudioError,
-                  })}
-                  {otherProviderEntries.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div
-                        className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
-                        data-testid="other-providers-section"
-                      >
-                        Other providers
+                ) : !hasCloudCatalogEntries ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    {cloudCatalogError
+                      ? "Couldn’t load cloud models"
+                      : "No cloud models available"}
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
+                      data-testid="ready-providers-section"
+                    >
+                      Ready to use
+                    </div>
+                    {readyModelEntries.length > 0 ? (
+                      readyModelEntries.map(({ providerId, model }) =>
+                        renderCloudModelItem({ providerId, model }),
+                      )
+                    ) : (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                        Add an API key under Model Providers, or pick a local
+                        model below.
                       </div>
-                      {otherProviderEntries.map(([providerId, models]) =>
-                        renderProviderSubmenu(providerId, models),
-                      )}
-                    </>
-                  )}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </>
-          </SubscriptionModelMenu>
+                    )}
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <div
+                  className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
+                  data-testid="local-providers-section"
+                >
+                  Local providers
+                </div>
+                {renderLocalProviderSubmenu({
+                  providerId: "ollama",
+                  label: "Ollama",
+                  models: ollamaModels,
+                  loading: ollamaLoading,
+                  error: ollamaError,
+                })}
+                {renderLocalProviderSubmenu({
+                  providerId: "lmstudio",
+                  label: "LM Studio",
+                  models: lmStudioModels,
+                  loading: lmStudioLoading,
+                  error: lmStudioError,
+                })}
+                {otherProviderEntries.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div
+                      className="px-2 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-medium text-muted-foreground"
+                      data-testid="other-providers-section"
+                    >
+                      Other providers
+                    </div>
+                    {otherProviderEntries.map(([providerId, models]) =>
+                      renderProviderSubmenu(providerId, models),
+                    )}
+                  </>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </>
         </DropdownMenuContent>
       </DropdownMenu>
 

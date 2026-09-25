@@ -70,14 +70,6 @@
   "communityCodeReview": "我们建议先在 GitHub 上查看代码。只有在您了解这些风险后再继续。",
   "deleteItemTitle": "删除{{itemType}}",
   "deleteItemConfirmation": "确定要删除「{{itemName}}」吗？此操作无法撤销。",
-  "proBanner": {
-    "manageDyadPro": "管理 Dyad Pro",
-    "alreadyHavePro": "已有 Dyad Pro？添加您的密钥",
-    "accessLeadingModels": "一个计划即可访问领先的 AI 模型",
-    "getDyadPro": "获取 Dyad Pro",
-    "upTo3xCheaper": "便宜高达 3 倍",
-    "byUsingSmartContext": "通过使用智能上下文"
-  },
   "setup": {
     "buildNewApp": "构建新应用",
     "setupDyad": "设置 Dyad",
@@ -100,8 +92,6 @@
     "notSureWatchVideo": "不确定该怎么做？观看上方的入门视频",
     "setupGeminiApiKey": "设置 Google Gemini API 密钥",
     "setupOpenRouterApiKey": "设置 OpenRouter API 密钥",
-    "setupDyadPro": "设置 Dyad Pro",
-    "accessAllModels": "一个计划即可访问所有 AI 模型",
     "setupOtherProviders": "设置其他 AI 提供商",
     "openAiAnthropicMore": "OpenAI、Anthropic 等",
     "freeModelsAvailable": "有免费模型可用"

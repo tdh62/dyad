@@ -484,8 +484,8 @@ async function prepareCodebaseFiles({
   chatContext: AppChatContext;
 }): Promise<PreparedCodebase | undefined> {
   const settings = readSettings();
-  const isSmartContextEnabled =
-    settings?.enableDyadPro && settings?.enableProSmartFilesContextMode;
+  // 内网 / 离线版本：不再要求 Dyad Pro 标记，本地即可启用 Smart Context。
+  const isSmartContextEnabled = settings?.enableProSmartFilesContextMode;
 
   try {
     await fsAsync.access(appPath);

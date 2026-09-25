@@ -69,14 +69,6 @@
   "communityCodeReview": "먼저 GitHub에서 코드를 검토하는 것을 권장합니다. 이러한 위험을 감수할 수 있는 경우에만 진행하세요.",
   "deleteItemTitle": "{{itemType}} 삭제",
   "deleteItemConfirmation": "\"{{itemName}}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
-  "proBanner": {
-    "manageDyadPro": "Dyad Pro 관리",
-    "alreadyHavePro": "이미 Dyad Pro를 사용 중이신가요? 키 추가하기",
-    "accessLeadingModels": "하나의 요금제로 최고의 AI 모델 이용하기",
-    "getDyadPro": "Dyad Pro 받기",
-    "upTo3xCheaper": "최대 3배 저렴",
-    "byUsingSmartContext": "스마트 컨텍스트 사용으로"
-  },
   "setup": {
     "buildNewApp": "새 앱 빌드",
     "setupDyad": "Dyad 설정",
@@ -99,8 +91,6 @@
     "notSureWatchVideo": "무엇을 해야 할지 모르시겠나요? 위의 시작하기 동영상을 시청하세요",
     "setupGeminiApiKey": "Google Gemini API 키 설정",
     "setupOpenRouterApiKey": "OpenRouter API 키 설정",
-    "setupDyadPro": "Dyad Pro 설정",
-    "accessAllModels": "하나의 요금제로 모든 AI 모델 이용하기",
     "setupOtherProviders": "다른 AI 공급자 설정",
     "openAiAnthropicMore": "OpenAI, Anthropic 등",
     "freeModelsAvailable": "무료 모델 이용 가능"
